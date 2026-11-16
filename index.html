@@ -950,7 +950,7 @@ function render() {
 }
 
 function backupBanner() {
-  if (ui.bannerHidden || db.entries.length < 3) return '';
+  if (ui.bannerHidden || db.entries.length < 3 || Sync.on) return '';   // mit Sync ist alles in GitHub gesichert
   const last = db.settings.lastBackup;
   if (last && Date.now() - last < 14 * 864e5) return '';
   return `<div class="banner">💾 <span>${last ? 'Dein letztes Backup ist über zwei Wochen alt.' : 'Du hast noch kein Backup erstellt.'} Deine Daten liegen nur in diesem Browser.</span>
