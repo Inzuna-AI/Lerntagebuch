@@ -1,0 +1,1669 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mein Lerntagebuch</title>
+<meta name="theme-color" content="#FBF7F2" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#1E1A17" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Lerntagebuch">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+<style>
+/* =========================================================
+   1. Design-Tokens (hell / dunkel)
+   ========================================================= */
+:root{
+  --bg:#FBF7F2; --bg-side:#F6EFE7; --surface:#FFFFFF; --surface-2:#F7F1EA; --input:#FFFDFB;
+  --text:#3B322C; --muted:#8C7F74; --border:#EDE3D8;
+  --accent:#E07A5F; --accent-hover:#D46A4E; --accent-soft:#FBE6DE; --accent-text:#B4512F;
+  --sage:#6FA287; --sage-soft:#E2F0E7; --sage-text:#3F7358;
+  --sun:#F2CC8F; --sun-soft:#FBF0DA;
+  --blob1:rgba(242,204,143,.35); --blob2:rgba(129,178,154,.22); --blob3:rgba(224,122,95,.16);
+  --shadow:0 1px 2px rgba(80,50,30,.04),0 10px 30px rgba(80,50,30,.06);
+  --shadow-lg:0 20px 60px rgba(60,35,20,.18);
+  --radius:20px; --radius-sm:12px;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#1E1A17; --bg-side:#231E1B; --surface:#2A2421; --surface-2:#322B27; --input:#2E2724;
+    --text:#F2EAE2; --muted:#A8998C; --border:#3D3430;
+    --accent:#EE9479; --accent-hover:#F4A58C; --accent-soft:#4A2F27; --accent-text:#F6B39D;
+    --sage:#8FC2A7; --sage-soft:#2B3B32; --sage-text:#A9D6BD;
+    --sun:#E8C17F; --sun-soft:#3E3426;
+    --blob1:rgba(232,193,127,.10); --blob2:rgba(143,194,167,.08); --blob3:rgba(238,148,121,.08);
+    --shadow:0 1px 2px rgba(0,0,0,.25),0 10px 30px rgba(0,0,0,.25);
+    --shadow-lg:0 20px 60px rgba(0,0,0,.5);
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#1E1A17; --bg-side:#231E1B; --surface:#2A2421; --surface-2:#322B27; --input:#2E2724;
+  --text:#F2EAE2; --muted:#A8998C; --border:#3D3430;
+  --accent:#EE9479; --accent-hover:#F4A58C; --accent-soft:#4A2F27; --accent-text:#F6B39D;
+  --sage:#8FC2A7; --sage-soft:#2B3B32; --sage-text:#A9D6BD;
+  --sun:#E8C17F; --sun-soft:#3E3426;
+  --blob1:rgba(232,193,127,.10); --blob2:rgba(143,194,167,.08); --blob3:rgba(238,148,121,.08);
+  --shadow:0 1px 2px rgba(0,0,0,.25),0 10px 30px rgba(0,0,0,.25);
+  --shadow-lg:0 20px 60px rgba(0,0,0,.5);
+  color-scheme:dark;
+}
+
+/* =========================================================
+   2. Grundlayout
+   ========================================================= */
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--bg); color:var(--text);
+  font-family:'Nunito',system-ui,-apple-system,'Segoe UI',sans-serif;
+  font-size:16px; line-height:1.6; -webkit-font-smoothing:antialiased;
+  overflow-x:hidden;
+}
+body::before{ /* weiche Farbflächen im Hintergrund */
+  content:""; position:fixed; inset:0; z-index:-1; pointer-events:none;
+  background:
+    radial-gradient(600px 400px at 85% -5%, var(--blob1), transparent 70%),
+    radial-gradient(500px 420px at 105% 60%, var(--blob2), transparent 70%),
+    radial-gradient(520px 380px at 25% 110%, var(--blob3), transparent 70%);
+}
+body.modal-open{overflow:hidden}
+h1,h2,h3{font-family:'Fraunces',Georgia,serif;font-weight:600;letter-spacing:-.01em;line-height:1.2;margin:0}
+h1{font-size:clamp(1.7rem,3.2vw,2.3rem)}
+h2{font-size:1.25rem}
+h3{font-size:1.05rem}
+p{margin:0}
+a{color:var(--accent-text)}
+button{font:inherit;color:inherit;cursor:pointer}
+input,textarea,select{font:inherit;color:inherit}
+::selection{background:var(--accent-soft)}
+svg.i{width:20px;height:20px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+svg.i.sm{width:16px;height:16px}
+
+.app{display:grid;grid-template-columns:250px minmax(0,1fr);min-height:100vh}
+main{padding:44px clamp(16px,4vw,56px) 90px;width:100%;max-width:960px}
+
+/* Sidebar */
+.sidebar{
+  position:sticky; top:0; height:100vh; padding:28px 16px 20px;
+  display:flex; flex-direction:column; gap:4px;
+  background:var(--bg-side); border-right:1px solid var(--border);
+}
+.brand{display:flex;align-items:center;gap:12px;padding:0 10px 26px}
+.brand-logo{
+  width:42px;height:42px;border-radius:14px;display:grid;place-items:center;
+  background:linear-gradient(135deg,var(--accent),var(--sun));color:#fff;box-shadow:var(--shadow)
+}
+.brand-logo svg{width:22px;height:22px}
+.brand b{font-family:'Fraunces',Georgia,serif;font-size:1.15rem;font-weight:600;display:block;line-height:1.1}
+.brand small{color:var(--muted);font-size:.8rem}
+.nav-btn{
+  display:flex;align-items:center;gap:12px;width:100%;padding:10px 14px;border:0;border-radius:14px;
+  background:transparent;color:var(--muted);font-weight:600;text-align:left;transition:background .2s,color .2s;position:relative
+}
+.nav-btn:hover{background:var(--surface);color:var(--text)}
+.nav-btn.active{background:var(--surface);color:var(--accent-text);box-shadow:var(--shadow)}
+.nav-btn .badge{
+  margin-left:auto;background:var(--accent-soft);color:var(--accent-text);font-size:.75rem;
+  border-radius:999px;padding:0 8px;min-width:22px;text-align:center
+}
+.nav-btn kbd{margin-left:auto}
+.side-foot{margin-top:auto;padding:16px 12px 0;color:var(--muted);font-size:.85rem}
+.streak{
+  display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--border);
+  border-radius:16px;padding:12px 14px;color:var(--text)
+}
+.streak .flame{font-size:1.3rem}
+.streak b{display:block;line-height:1.2}
+kbd{
+  font-family:inherit;font-size:.72rem;border:1px solid var(--border);border-bottom-width:2px;border-radius:6px;
+  padding:0 6px;color:var(--muted);background:var(--surface)
+}
+
+/* =========================================================
+   3. Bausteine
+   ========================================================= */
+.page-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:28px}
+.eyebrow{color:var(--accent-text);font-weight:700;font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px}
+.subtle{color:var(--muted)}
+.card{
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);
+  box-shadow:var(--shadow);padding:24px;margin-bottom:20px;animation:rise .35s ease both
+}
+.card-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+@keyframes rise{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--border);
+  background:var(--surface);border-radius:999px;padding:8px 16px;font-weight:600;font-size:.92rem;
+  transition:background .2s,border-color .2s,transform .1s,color .2s;white-space:nowrap
+}
+.btn:hover{border-color:var(--accent);color:var(--accent-text)}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{background:var(--accent-hover);color:#fff}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--muted)}
+.btn.ghost:hover{background:var(--surface-2);color:var(--text)}
+.btn.danger:hover{border-color:#d9534f;color:#d9534f}
+.btn.sm{padding:5px 12px;font-size:.85rem}
+.icon-btn{
+  width:36px;height:36px;border-radius:50%;display:inline-grid;place-items:center;border:1px solid transparent;
+  background:transparent;color:var(--muted);transition:background .2s,color .2s
+}
+.icon-btn:hover{background:var(--surface-2);color:var(--text)}
+.icon-btn.sm{width:30px;height:30px}
+
+.input,.textarea,select.input{
+  width:100%;background:var(--input);border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:10px 14px;outline:none;transition:border-color .2s,box-shadow .2s
+}
+.input:focus,.textarea:focus{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+.textarea{resize:vertical;line-height:1.7}
+label.lbl{display:block;font-weight:700;font-size:.85rem;color:var(--muted);margin:14px 0 6px}
+
+.chip{
+  display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:2px 10px;font-size:.82rem;font-weight:600;
+  background:var(--accent-soft);color:var(--accent-text);border:0;line-height:1.6
+}
+button.chip:hover{filter:brightness(.97)}
+.chip.sage{background:var(--sage-soft);color:var(--sage-text)}
+.chip.sun{background:var(--sun-soft);color:var(--text)}
+.chip.outline{background:transparent;border:1px solid var(--border);color:var(--muted)}
+.chip.active{background:var(--accent);color:#fff}
+.chip .x{border:0;background:transparent;color:inherit;padding:0 0 0 2px;opacity:.6;line-height:1}
+.chip .x:hover{opacity:1}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+
+.tag-field{
+  display:flex;flex-wrap:wrap;gap:6px;align-items:center;padding:6px 8px;border-radius:var(--radius-sm);
+  border:1px dashed var(--border);min-height:42px
+}
+.tag-field:focus-within{border-color:var(--accent);border-style:solid}
+.tag-field input{border:0;outline:none;background:transparent;min-width:120px;flex:1;padding:4px 6px;font-size:.9rem}
+
+.seg{display:inline-flex;background:var(--surface-2);border-radius:999px;padding:4px;gap:2px;flex-wrap:wrap}
+.seg button{border:0;background:transparent;border-radius:999px;padding:6px 14px;font-weight:600;font-size:.88rem;color:var(--muted)}
+.seg button.active{background:var(--surface);color:var(--text);box-shadow:var(--shadow)}
+.seg .n{opacity:.6;font-weight:700;margin-left:4px}
+
+.empty{
+  text-align:center;color:var(--muted);padding:34px 16px;border:1px dashed var(--border);border-radius:var(--radius)
+}
+.empty .big{font-size:2rem;display:block;margin-bottom:6px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.spacer{flex:1}
+.hidden{display:none !important}
+
+/* Markdown */
+.md{overflow-wrap:anywhere}
+.md > *:first-child{margin-top:0}
+.md > *:last-child{margin-bottom:0}
+.md p,.md ul,.md ol,.md blockquote,.md pre{margin:0 0 .8em}
+.md h1,.md h2,.md h3{margin:1.1em 0 .5em}
+.md h1{font-size:1.5rem}.md h2{font-size:1.25rem}.md h3{font-size:1.08rem}
+.md code{background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:.05em .4em;font-size:.88em;font-family:'Cascadia Code',Consolas,monospace}
+.md pre{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px;overflow:auto}
+.md pre code{background:none;border:0;padding:0}
+.md blockquote{border-left:4px solid var(--sun);background:var(--sun-soft);margin-left:0;padding:10px 16px;border-radius:0 12px 12px 0}
+.md ul,.md ol{padding-left:1.4em}
+.md a{color:var(--accent-text)}
+.md table{border-collapse:collapse}
+.md th,.md td{border:1px solid var(--border);padding:4px 10px}
+.md img{max-width:100%}
+mark{background:var(--sun);color:#3B322C;border-radius:4px;padding:0 2px}
+
+/* =========================================================
+   4. Ansichten
+   ========================================================= */
+/* Tag-Editor */
+.day-nav{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--border);border-radius:999px;padding:4px;box-shadow:var(--shadow)}
+.day-nav input[type=date]{border:0;background:transparent;outline:none;padding:4px 6px;font-weight:600;color:var(--text)}
+.title-input{
+  width:100%;border:0;outline:none;background:transparent;font-family:'Fraunces',Georgia,serif;
+  font-size:1.5rem;font-weight:600;padding:0 0 10px;color:var(--text)
+}
+.title-input::placeholder{color:var(--muted);opacity:.7}
+.editor-tabs{display:flex;align-items:center;gap:8px;margin:18px 0 10px;flex-wrap:wrap}
+.notes{min-height:280px;border:1px solid var(--border);background:var(--input);font-size:1rem}
+.preview{min-height:280px;border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 18px;background:var(--input)}
+.save-state{font-size:.82rem;color:var(--muted);margin-top:10px;display:flex;align-items:center;gap:6px}
+.save-state::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--sage)}
+.save-state.saving::before{background:var(--sun)}
+
+/* Fragen */
+.q-list{display:flex;flex-direction:column;gap:10px}
+.q-card{
+  display:flex;gap:12px;align-items:flex-start;padding:14px 14px 14px 12px;border-radius:16px;
+  background:var(--surface-2);border:1px solid transparent;transition:background .2s
+}
+.q-card.geklärt{background:var(--sage-soft)}
+.q-card .check{
+  width:26px;height:26px;border-radius:50%;flex:none;margin-top:1px;border:2px solid var(--muted);
+  background:transparent;display:grid;place-items:center;color:transparent;transition:all .2s
+}
+.q-card .check:hover{border-color:var(--sage)}
+.q-card.geklärt .check{background:var(--sage);border-color:var(--sage);color:#fff}
+.q-card .check svg{width:15px;height:15px;stroke-width:3}
+.q-body{flex:1;min-width:0}
+.q-text{font-weight:600}
+.q-card.geklärt .q-text{color:var(--sage-text)}
+.q-meta{font-size:.82rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:2px}
+.q-meta button{border:0;background:none;padding:0;color:var(--accent-text);font-size:inherit;font-weight:600}
+.q-answer{margin-top:10px;padding:10px 14px;border-radius:12px;background:var(--surface);font-size:.95rem}
+.q-answer-label{font-size:.75rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.add-row{display:flex;gap:8px;margin-bottom:14px}
+.add-row .input{flex:1}
+
+/* Zeitleiste & Kalender */
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:20px}
+.stat{background:var(--surface);border:1px solid var(--border);border-radius:18px;padding:14px 16px;box-shadow:var(--shadow)}
+.stat b{font-family:'Fraunces',Georgia,serif;font-size:1.6rem;display:block;line-height:1.1}
+.stat span{font-size:.82rem;color:var(--muted)}
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px}
+.cal-wd{text-align:center;font-size:.75rem;font-weight:700;color:var(--muted);padding-bottom:4px}
+.cal-day{
+  aspect-ratio:1;border:0;border-radius:14px;background:transparent;position:relative;font-weight:600;
+  display:grid;place-items:center;color:var(--text);transition:background .2s;font-size:.95rem
+}
+.cal-day:hover{background:var(--surface-2)}
+.cal-day.has{background:var(--accent-soft);color:var(--accent-text)}
+.cal-day.has::after{content:"";position:absolute;bottom:18%;width:5px;height:5px;border-radius:50%;background:var(--accent)}
+.cal-day.today{box-shadow:inset 0 0 0 2px var(--sun)}
+.cal-day.sel{background:var(--accent);color:#fff}
+.cal-day.sel::after{background:#fff}
+.cal-day.blank{visibility:hidden}
+.entry-list{display:flex;flex-direction:column;gap:12px}
+.entry-card{
+  display:flex;gap:16px;align-items:flex-start;text-align:left;width:100%;padding:16px;border-radius:18px;
+  background:var(--surface);border:1px solid var(--border);box-shadow:var(--shadow);transition:transform .2s,border-color .2s
+}
+.entry-card:hover{transform:translateY(-2px);border-color:var(--accent)}
+.date-badge{
+  flex:none;width:58px;border-radius:14px;background:var(--sun-soft);text-align:center;padding:8px 0;line-height:1.1
+}
+.date-badge b{font-family:'Fraunces',Georgia,serif;font-size:1.5rem;display:block}
+.date-badge span{font-size:.72rem;font-weight:700;text-transform:uppercase;color:var(--muted)}
+.entry-card .body{flex:1;min-width:0}
+.entry-card h3{margin-bottom:4px}
+.excerpt{color:var(--muted);font-size:.92rem;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;margin-bottom:8px}
+.counts{display:flex;gap:12px;font-size:.8rem;color:var(--muted);margin-top:6px}
+
+/* Lexikon */
+.topic{margin-bottom:14px}
+.topic .topic{margin:10px 0 0 14px;padding-left:14px;border-left:2px solid var(--border)}
+.topic-head{display:flex;align-items:center;gap:8px;padding:6px 6px 6px 10px;border-radius:14px;transition:background .2s}
+.topic-head:hover{background:var(--surface-2)}
+.topic-head .name{font-family:'Fraunces',Georgia,serif;font-weight:600;font-size:1.1rem}
+.topic .topic .topic-head .name{font-size:1rem}
+.topic-head .count{font-size:.78rem;color:var(--muted)}
+.topic-actions{margin-left:auto;display:flex;gap:2px;opacity:.35;transition:opacity .2s}
+.topic-head:hover .topic-actions,.topic-head:focus-within .topic-actions{opacity:1}
+.term-list{display:flex;flex-direction:column;gap:6px;padding:6px 0 0 10px;min-height:12px}
+.term-row{
+  display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:14px;background:var(--surface-2);
+  border:1px solid transparent;cursor:pointer;transition:border-color .2s,transform .15s
+}
+.term-row:hover{border-color:var(--accent)}
+.term-row .grip{color:var(--muted);cursor:grab;opacity:.5}
+.term-row b{font-weight:700}
+.term-row small{color:var(--muted);overflow:hidden;white-space:nowrap;text-overflow:ellipsis;flex:1;min-width:0}
+.term-row.dragging{opacity:.4}
+.drop-target{outline:2px dashed var(--accent);outline-offset:2px;border-radius:14px}
+.az-bar{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:18px}
+.az-bar button{width:32px;height:32px;border-radius:10px;border:0;background:var(--surface-2);font-weight:700;font-size:.85rem}
+.az-bar button:disabled{opacity:.3;cursor:default}
+.az-bar button:not(:disabled):hover{background:var(--accent);color:#fff}
+.az-letter{font-family:'Fraunces',Georgia,serif;font-size:1.6rem;color:var(--accent-text);margin:18px 0 8px;scroll-margin-top:20px}
+.crumbs{font-size:.82rem;color:var(--muted);margin-bottom:4px}
+
+/* Suche */
+.search-box{position:relative;margin-bottom:16px}
+.search-box svg{position:absolute;left:16px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.search-box .input{padding:14px 16px 14px 46px;font-size:1.05rem;border-radius:999px;box-shadow:var(--shadow)}
+.result{display:block;width:100%;text-align:left;padding:12px 16px;border-radius:14px;border:1px solid transparent;background:var(--surface-2);margin-bottom:8px}
+.result:hover{border-color:var(--accent)}
+.result .kind{font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.result p{color:var(--muted);font-size:.9rem}
+.result-group h3{margin:20px 0 10px}
+
+/* Banner, Modal, Toast */
+.banner{
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:var(--sun-soft);border:1px solid var(--sun);
+  border-radius:16px;padding:12px 16px;margin-bottom:22px;font-size:.92rem
+}
+#modal{position:fixed;inset:0;z-index:50;display:flex;align-items:center;justify-content:center;padding:16px}
+#modal[hidden]{display:none}
+.modal-backdrop{position:absolute;inset:0;background:rgba(30,20,15,.35);backdrop-filter:blur(4px);animation:fade .2s ease}
+.modal-card{
+  position:relative;width:100%;max-width:560px;max-height:calc(100vh - 32px);overflow:auto;background:var(--surface);
+  border-radius:24px;padding:26px;box-shadow:var(--shadow-lg);animation:pop .22s ease
+}
+.modal-card.wide{max-width:720px}
+.modal-card h2{margin-bottom:10px}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;flex-wrap:wrap}
+@keyframes fade{from{opacity:0}}
+@keyframes pop{from{opacity:0;transform:scale(.96) translateY(8px)}}
+#toast{
+  position:fixed;left:50%;bottom:28px;transform:translateX(-50%) translateY(20px);opacity:0;z-index:60;
+  background:var(--text);color:var(--bg);padding:10px 18px;border-radius:999px;font-weight:600;font-size:.9rem;
+  transition:all .25s;pointer-events:none;max-width:calc(100vw - 32px)
+}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* Einstellungen */
+.setting{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:14px 0;border-bottom:1px solid var(--border)}
+.setting:last-child{border-bottom:0}
+.setting p{color:var(--muted);font-size:.88rem}
+
+/* Sync */
+.sync-pill{
+  position:fixed;top:14px;right:16px;z-index:25;display:inline-flex;align-items:center;gap:6px;
+  border:1px solid var(--border);background:var(--surface);color:var(--muted);border-radius:999px;
+  padding:5px 12px 5px 10px;font-size:.8rem;font-weight:700;box-shadow:var(--shadow);transition:color .2s,border-color .2s
+}
+.sync-pill:hover{border-color:var(--accent);color:var(--text)}
+.sync-pill .dot{width:8px;height:8px;border-radius:50%;background:var(--sage)}
+.sync-pill.pending .dot,.sync-pill.syncing .dot{background:var(--sun)}
+.sync-pill.syncing .dot{animation:pulse 1s ease-in-out infinite}
+.sync-pill.offline .dot{background:var(--muted)}
+.sync-pill.error{color:#c0503a;border-color:#e8a08f}
+.sync-pill.error .dot{background:#d9534f}
+@keyframes pulse{50%{opacity:.3}}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 14px}
+.status-line{display:flex;align-items:center;gap:8px}
+
+/* =========================================================
+   5. Mobil
+   ========================================================= */
+@media (max-width:760px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .sidebar{
+    position:fixed;top:auto;bottom:0;left:0;right:0;height:auto;z-index:30;flex-direction:row;gap:0;
+    padding:6px 4px calc(6px + env(safe-area-inset-bottom));border-right:0;border-top:1px solid var(--border);
+    justify-content:space-around;background:var(--bg-side)
+  }
+  .brand,.side-foot,.nav-btn kbd{display:none}
+  .nav-btn{flex-direction:column;gap:2px;padding:6px 2px;font-size:.68rem;text-align:center;align-items:center;flex:1;min-width:0}
+  .nav-btn .badge{position:absolute;top:2px;right:calc(50% - 22px);margin:0;padding:0 5px;min-width:0;font-size:.65rem}
+  main{padding:24px 16px 110px}
+  .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .card{padding:18px}
+  .topic-head{flex-wrap:wrap}
+  .topic-actions{opacity:1;margin-left:-6px;width:100%}
+  .day-nav{width:100%;justify-content:space-between}
+  #toast{bottom:90px}
+  .grid2{grid-template-columns:minmax(0,1fr)}
+  .sync-pill{top:calc(10px + env(safe-area-inset-top));right:12px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+  <nav class="sidebar" id="sidebar"></nav>
+  <main id="main"></main>
+</div>
+<button id="syncPill" class="sync-pill" data-action="sync-pill" hidden></button>
+<div id="modal" hidden></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<datalist id="allTags"></datalist>
+
+<script>
+/* =========================================================
+   Lerntagebuch – alle Daten liegen im localStorage dieses Browsers.
+   ========================================================= */
+const KEY = 'lerntagebuch.v1';
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+
+/* ---------- Icons ---------- */
+const ICONS = {
+  today: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
+  calendar: '<rect x="3" y="4" width="18" height="18" rx="3"/><path d="M16 2v4M8 2v4M3 10h18"/>',
+  help: '<circle cx="12" cy="12" r="10"/><path d="M9.1 9a3 3 0 0 1 5.8 1c0 2-3 3-3 3"/><path d="M12 17h.01"/>',
+  book: '<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',
+  settings: '<path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/>',
+  plus: '<path d="M12 5v14M5 12h14"/>',
+  x: '<path d="M18 6 6 18M6 6l12 12"/>',
+  left: '<path d="m15 18-6-6 6-6"/>',
+  right: '<path d="m9 18 6-6-6-6"/>',
+  up: '<path d="m18 15-6-6-6 6"/>',
+  down: '<path d="m6 9 6 6 6-6"/>',
+  trash: '<path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/>',
+  edit: '<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>',
+  check: '<path d="M20 6 9 17l-5-5"/>',
+  grip: '<circle cx="9" cy="6" r="1"/><circle cx="15" cy="6" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="18" r="1"/><circle cx="15" cy="18" r="1"/>',
+  download: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/>',
+  upload: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/>',
+  sparkle: '<path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9z"/><path d="M19 3v4M17 5h4"/>',
+  cloud: '<path d="M17.5 19H8a5 5 0 1 1 1-9.9A6 6 0 0 1 20.5 11a4 4 0 0 1-3 8z"/>',
+  refresh: '<path d="M21 12a9 9 0 0 1-15.5 6.2L3 16M3 12a9 9 0 0 1 15.5-6.2L21 8M21 3v5h-5M3 21v-5h5"/>',
+  folder: '<path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9L9.6 3.5H4a2 2 0 0 0-2 2V18a2 2 0 0 0 2 2z"/>',
+};
+const icon = (n, cls = '') => `<svg class="i ${cls}" viewBox="0 0 24 24" aria-hidden="true">${ICONS[n] || ''}</svg>`;
+
+/* ---------- Hilfsfunktionen ---------- */
+const pad = n => String(n).padStart(2, '0');
+const toDateStr = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+const todayStr = () => toDateStr(new Date());
+const parseDate = s => { const [y, m, d] = s.split('-').map(Number); return new Date(y, m - 1, d); };
+const shiftDate = (s, n) => { const d = parseDate(s); d.setDate(d.getDate() + n); return toDateStr(d); };
+const fmtLong = s => parseDate(s).toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+const fmtShort = s => parseDate(s).toLocaleDateString('de-DE', { day: 'numeric', month: 'short', year: 'numeric' });
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const byOrder = (a, b) => (a.order ?? 0) - (b.order ?? 0);
+const byName = (a, b) => a.name.localeCompare(b.name, 'de', { sensitivity: 'base' });
+const fold = s => String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+
+function md(text) {
+  text = text || '';
+  if (window.marked && window.DOMPurify) {
+    return DOMPurify.sanitize(marked.parse(text, { breaks: true, gfm: true }));
+  }
+  return miniMd(text); // Fallback, falls offline
+}
+function miniMd(t) {
+  let h = esc(t);
+  h = h.replace(/```[^\n]*\n?([\s\S]*?)```/g, (m, c) => '<pre><code>' + c + '</code></pre>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/^### (.*)$/gm, '<h3>$1</h3>').replace(/^## (.*)$/gm, '<h2>$1</h2>').replace(/^# (.*)$/gm, '<h1>$1</h1>')
+    .replace(/^&gt; (.*)$/gm, '<blockquote>$1</blockquote>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>').replace(/(^|\W)\*(.+?)\*/g, '$1<em>$2</em>')
+    .replace(/^[-*] (.*)$/gm, '<li>$1</li>');
+  h = h.replace(/(<li>.*<\/li>\n?)+/g, m => '<ul>' + m.replace(/\n/g, '') + '</ul>');
+  return h.replace(/\n/g, '<br>');
+}
+function plain(t) {
+  return String(t || '').replace(/```[\s\S]*?```/g, ' ').replace(/!?\[([^\]]*)\]\([^)]*\)/g, '$1')
+    .replace(/[`*_>#~]/g, '').replace(/^\s*[-+]\s+/gm, '').replace(/\s+/g, ' ').trim();
+}
+
+/* ---------- Daten ---------- */
+let db;
+let ui = {
+  view: 'today', date: todayStr(), calMonth: todayStr().slice(0, 7), notesTab: 'write',
+  qFilter: 'offen', lexMode: 'tree', search: '', tagFilter: null, editingAnswer: null,
+  bannerHidden: false, termDraft: null, defTab: 'write'
+};
+
+function normalize(d) {
+  d = d || {};
+  return {
+    version: 1,
+    entries: (d.entries || []).map(e => ({ title: '', notes: '', tags: [], ...e })),
+    questions: (d.questions || []).map(q => ({ answer: '', status: 'offen', tags: [], ...q })),
+    topics: d.topics || [],
+    terms: (d.terms || []).map(t => ({ definition: '', tags: [], entryIds: [], topicId: null, ...t })),
+    deleted: { ...(d.deleted || {}) },   // Löschmarken für den Sync: id -> Zeitpunkt
+    settings: Object.assign({ theme: 'system', lastBackup: null }, d.settings || {})
+  };
+}
+function load() {
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) { db = normalize(JSON.parse(raw)); resetSnap(); return; }
+  } catch (e) { console.warn(e); }
+  db = seed(); resetSnap(); persist();
+}
+function persist() {
+  try { localStorage.setItem(KEY, JSON.stringify(db)); }
+  catch (e) { if (!persist.warned) { persist.warned = true; toast('Speichern im Browser nicht möglich – bitte ein Backup exportieren!'); } }
+}
+/* Speichern: merkt sich, welche Elemente sich geändert haben (für den Sync) */
+function save() {
+  const changed = stamp();
+  persist();
+  if (changed) Sync.changed();
+}
+
+/* ---------- Änderungsverfolgung ---------- */
+const COLS = ['entries', 'questions', 'topics', 'terms'];
+let snap = new Map();
+const itemKey = x => { const { _u, ...rest } = x; return JSON.stringify(rest); };
+function resetSnap() {
+  snap = new Map();
+  COLS.forEach(c => db[c].forEach(x => { if (!x._u) x._u = x.updatedAt || x.createdAt || 1; snap.set(x.id, itemKey(x)); }));
+}
+function stamp() {
+  const now = Date.now(), next = new Map();
+  let changed = false;
+  COLS.forEach(c => db[c].forEach(x => {
+    const k = itemKey(x);
+    if (snap.get(x.id) !== k) { x._u = now; changed = true; }
+    next.set(x.id, k);
+  }));
+  snap.forEach((k, id) => { if (!next.has(id)) { db.deleted[id] = now; changed = true; } });
+  snap = next;
+  return changed;
+}
+/* Zwei Datenstände zusammenführen: pro Element gewinnt die neueste Änderung */
+function mergeDb(local, remote) {
+  const del = { ...remote.deleted };
+  Object.entries(local.deleted).forEach(([id, t]) => del[id] = Math.max(del[id] || 0, t));
+  const out = normalize({ settings: local.settings });
+  COLS.forEach(c => {
+    const m = new Map();
+    remote[c].forEach(x => m.set(x.id, x));
+    local[c].forEach(x => { const y = m.get(x.id); if (!y || (x._u || 0) >= (y._u || 0)) m.set(x.id, x); });
+    out[c] = [...m.values()].filter(x => !(del[x.id] && del[x.id] >= (x._u || 0)));
+  });
+  const cutoff = Date.now() - 180 * 864e5;
+  Object.keys(del).forEach(id => { if (del[id] < cutoff) delete del[id]; });
+  out.deleted = del;
+  mergeSameDay(out);
+  return out;
+}
+/* Zwei Geräte haben am selben Tag einen Eintrag angelegt -> zu einem verschmelzen */
+function mergeSameDay(d) {
+  const now = Date.now(), byDate = new Map();
+  [...d.entries].sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0)).forEach(e => {
+    const p = byDate.get(e.date);
+    if (!p) { byDate.set(e.date, e); return; }
+    if (e.title.trim() && e.title !== p.title) p.title = p.title.trim() ? p.title + ' / ' + e.title : e.title;
+    if (e.notes.trim() && e.notes !== p.notes) p.notes = p.notes.trim() ? p.notes + '\n\n---\n\n' + e.notes : e.notes;
+    p.tags = [...new Set([...p.tags, ...e.tags])]; p._u = now;
+    d.questions.forEach(q => { if (q.entryId === e.id) { q.entryId = p.id; q._u = now; } });
+    d.terms.forEach(t => { if (t.entryIds.includes(e.id)) { t.entryIds = [...new Set(t.entryIds.map(i => i === e.id ? p.id : i))]; t._u = now; } });
+    d.deleted[e.id] = now;
+  });
+  d.entries = [...byDate.values()];
+}
+const sortById = arr => [...arr].sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+function syncPayload(d) {
+  const o = { app: 'lerntagebuch', version: 1 };
+  COLS.forEach(c => o[c] = sortById(d[c]));
+  o.deleted = Object.fromEntries(Object.entries(d.deleted).sort());
+  return o;
+}
+const sig = d => JSON.stringify(syncPayload(d));
+let saveTimer;
+function saveSoon() {
+  const s = $('#saveState'); if (s) { s.classList.add('saving'); s.textContent = 'Speichert …'; }
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    save();
+    const s2 = $('#saveState');
+    if (s2) { s2.classList.remove('saving'); s2.textContent = 'Gespeichert um ' + new Date().toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }); }
+  }, 400);
+}
+window.addEventListener('beforeunload', () => { clearTimeout(saveTimer); save(); });
+
+function seed() {
+  const today = todayStr();
+  const e = {
+    id: uid(), date: today, title: 'Willkommen in deinem Lerntagebuch',
+    tags: ['Start'], createdAt: Date.now(), updatedAt: Date.now(),
+    notes: [
+      '## So funktioniert\'s',
+      '- **Ein Eintrag pro Tag** – oben wechselst du zwischen den Tagen.',
+      '- Schreibe Notizen in **Markdown**: `**fett**`, `- Listen`, `` `Code` `` oder `## Überschriften`.',
+      '- **Tags** helfen dir, Themen später wiederzufinden.',
+      '- Markiere ein Wort in deinen Notizen und klicke **→ Lexikon-Begriff**, um es ins Lexikon aufzunehmen.',
+      '- Offene **Fragen** sammelst du unten – hake sie ab, sobald sie geklärt sind.',
+      '',
+      '> Tipp: Mit `Strg + K` öffnest du jederzeit die Suche.',
+      '',
+      'Diesen Beispiel-Eintrag kannst du überschreiben oder löschen.'
+    ].join('\n')
+  };
+  const t1 = { id: uid(), name: 'Claude Grundlagen', parentId: null, order: 0 };
+  const t2 = { id: uid(), name: 'Prompting', parentId: t1.id, order: 0 };
+  const t3 = { id: uid(), name: 'Claude Code', parentId: null, order: 1 };
+  return normalize({
+    entries: [e],
+    topics: [t1, t2, t3],
+    terms: [
+      { id: uid(), name: 'Prompt', topicId: t2.id, order: 0, tags: ['Grundlagen'], entryIds: [e.id],
+        definition: 'Die Anweisung bzw. Nachricht, die du Claude gibst. Je klarer **Ziel**, **Kontext** und **gewünschtes Format**, desto besser die Antwort.' },
+      { id: uid(), name: 'Slash-Commands', topicId: t3.id, order: 0, tags: ['Claude Code'], entryIds: [e.id],
+        definition: 'Befehle, die mit `/` beginnen – z. B. `/init` oder `/help`. Sie starten eingebaute Funktionen oder Skills.' }
+    ],
+    questions: [
+      { id: uid(), text: 'Was ist der Unterschied zwischen Plan-Modus und normalem Modus?', entryId: e.id, status: 'offen', answer: '', createdAt: Date.now() }
+    ]
+  });
+}
+
+/* Leere Tageseinträge wieder entfernen */
+function pruneEmpty() {
+  const before = db.entries.length;
+  db.entries = db.entries.filter(e =>
+    e.title.trim() || e.notes.trim() || e.tags.length ||
+    db.questions.some(q => q.entryId === e.id) || db.terms.some(t => t.entryIds.includes(e.id)));
+  if (db.entries.length !== before) save();
+}
+const entryByDate = d => db.entries.find(e => e.date === d);
+const entryById = id => db.entries.find(e => e.id === id);
+function ensureEntry(date) {
+  let e = entryByDate(date);
+  if (!e) { e = { id: uid(), date, title: '', notes: '', tags: [], createdAt: Date.now(), updatedAt: Date.now() }; db.entries.push(e); }
+  return e;
+}
+function allTags() {
+  const m = new Map();
+  [...db.entries, ...db.terms].forEach(x => (x.tags || []).forEach(t => m.set(t, (m.get(t) || 0) + 1)));
+  return [...m.entries()].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], 'de'));
+}
+function streak() {
+  const set = new Set(db.entries.map(e => e.date));
+  let d = todayStr(); if (!set.has(d)) d = shiftDate(d, -1);
+  let n = 0; while (set.has(d)) { n++; d = shiftDate(d, -1); }
+  return n;
+}
+
+/* ---------- Themenbaum ---------- */
+const topicById = id => db.topics.find(t => t.id === id);
+const childTopics = pid => db.topics.filter(t => (t.parentId || null) === (pid || null)).sort(byOrder);
+const termsIn = tid => db.terms.filter(t => (t.topicId || null) === (tid || null)).sort(byOrder);
+function topicPath(id) {
+  const p = []; let t = topicById(id);
+  while (t) { p.unshift(t.name); t = topicById(t.parentId); }
+  return p;
+}
+function topicDepth(id) { return topicPath(id).length; }
+function flatTopics(pid = null, depth = 0, out = []) {
+  childTopics(pid).forEach(t => { out.push({ t, depth }); flatTopics(t.id, depth + 1, out); });
+  return out;
+}
+function countTermsDeep(tid) {
+  return termsIn(tid).length + childTopics(tid).reduce((s, c) => s + countTermsDeep(c.id), 0);
+}
+function moveTerm(termId, topicId, beforeId) {
+  const t = db.terms.find(x => x.id === termId); if (!t) return;
+  t.topicId = topicId || null;
+  const list = db.terms.filter(x => (x.topicId || null) === t.topicId && x.id !== termId).sort(byOrder);
+  const idx = beforeId ? list.findIndex(x => x.id === beforeId) : -1;
+  if (idx < 0) list.push(t); else list.splice(idx, 0, t);
+  list.forEach((x, i) => x.order = i);
+  save();
+}
+
+/* =========================================================
+   Sync mit einem privaten GitHub-Repository
+   (Zugangsdaten liegen nur auf diesem Gerät, nie in den Tagebuch-Daten)
+   ========================================================= */
+const SYNC_KEY = 'lerntagebuch.sync';
+function b64enc(str) {
+  const bytes = new TextEncoder().encode(str); let bin = '';
+  for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+  return btoa(bin);
+}
+function b64dec(b64) {
+  const bin = atob(b64.replace(/\s/g, '')); const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return new TextDecoder().decode(bytes);
+}
+const gh = {
+  repoUrl: c => `https://api.github.com/repos/${encodeURIComponent(c.owner)}/${encodeURIComponent(c.repo)}`,
+  fileUrl(c) { return this.repoUrl(c) + '/contents/' + c.path.split('/').map(encodeURIComponent).join('/'); },
+  async req(url, c, opt = {}) {
+    const r = await fetch(url, {
+      cache: 'no-store', ...opt,
+      headers: { Authorization: 'Bearer ' + c.token, Accept: 'application/vnd.github+json', 'X-GitHub-Api-Version': '2022-11-28', ...(opt.headers || {}) }
+    });
+    if (!r.ok) {
+      let m = ''; try { m = (await r.json()).message || ''; } catch (e) { }
+      const err = new Error(m || 'HTTP ' + r.status); err.status = r.status; throw err;
+    }
+    return r;
+  },
+  async repo(c) { return (await this.req(this.repoUrl(c), c)).json(); },
+  async getFile(c) {
+    try {
+      const j = await (await this.req(this.fileUrl(c), c)).json();
+      const text = j.content ? b64dec(j.content)
+        : await (await this.req(this.fileUrl(c), c, { headers: { Accept: 'application/vnd.github.raw' } })).text();
+      return { sha: j.sha, data: normalize(JSON.parse(text)) };
+    } catch (e) { if (e.status === 404) return null; throw e; }
+  },
+  async putFile(c, text, sha) {
+    const body = { message: `Lerntagebuch aktualisiert (${c.device || 'Gerät'})`, content: b64enc(text) };
+    if (sha) body.sha = sha;
+    const j = await (await this.req(this.fileUrl(c), c, { method: 'PUT', body: JSON.stringify(body), headers: { 'Content-Type': 'application/json' } })).json();
+    return j.content.sha;
+  }
+};
+function syncErr(e) {
+  if (!e || !e.status) return 'Keine Verbindung zu GitHub – Änderungen bleiben hier gespeichert.';
+  if (e.status === 401) return 'Der Token ist ungültig oder abgelaufen.';
+  if (e.status === 403) return 'Der Token darf hier nicht schreiben (Berechtigung „Contents: Read and write“ prüfen).';
+  if (e.status === 404) return 'Repository nicht gefunden – Namen prüfen und dem Token Zugriff auf dieses Repository geben.';
+  return 'GitHub meldet: ' + e.message;
+}
+const guessDevice = () => /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent) ? 'Handy' : 'PC';
+const countText = d => `${d.entries.length} Einträge, ${d.terms.length} Begriffe, ${d.questions.length} Fragen`;
+
+const Sync = {
+  cfg: null, state: 'off', msg: '', busy: false, again: false, timer: null, lastRun: 0, retries: 0,
+  get on() { return !!(this.cfg && this.cfg.token); },
+  load() {
+    try { this.cfg = JSON.parse(localStorage.getItem(SYNC_KEY) || 'null'); } catch (e) { this.cfg = null; }
+    this.state = this.on ? (this.cfg.dirty ? 'pending' : 'ok') : 'off';
+  },
+  store() {
+    try { this.cfg ? localStorage.setItem(SYNC_KEY, JSON.stringify(this.cfg)) : localStorage.removeItem(SYNC_KEY); } catch (e) { }
+  },
+  set(state, msg = '') {
+    this.state = state; this.msg = msg;
+    renderSyncPill();
+    const s = $('#syncStatus'); if (s) s.innerHTML = syncStatusText();
+  },
+  /* wird nach jeder lokalen Änderung aufgerufen */
+  changed() {
+    if (!this.on) return;
+    this.cfg.dirty = true; this.store();
+    if (!this.busy) this.set('pending');
+    clearTimeout(this.timer);
+    this.timer = setTimeout(() => this.run(), 3000);
+  },
+  /* holen -> zusammenführen -> hochladen */
+  async run() {
+    if (!this.on) return;
+    if (this.busy) { this.again = true; return; }
+    this.busy = true;
+    clearTimeout(saveTimer); save();          // offene Eingaben sichern
+    clearTimeout(this.timer);
+    this.set('syncing');
+    let pushing = false;
+    try {
+      const remote = await gh.getFile(this.cfg);
+      let localChanged = false;
+      if (remote && remote.sha !== this.cfg.sha) {
+        const merged = mergeDb(db, remote.data);
+        localChanged = sig(merged) !== sig(db);
+        if (localChanged) { merged.settings = db.settings; db = merged; resetSnap(); persist(); }
+      }
+      if (!remote || this.cfg.dirty || sig(db) !== sig(remote.data)) {
+        pushing = true; this.cfg.dirty = false;
+        this.cfg.sha = await gh.putFile(this.cfg, JSON.stringify(syncPayload(db), null, 1), remote && remote.sha);
+      } else this.cfg.sha = remote.sha;
+      this.cfg.lastSync = Date.now(); this.retries = 0; this.store();
+      this.set(this.cfg.dirty ? 'pending' : 'ok');
+      if (localChanged) refreshAfterSync();
+    } catch (e) {
+      if (pushing) this.cfg.dirty = true;
+      this.store();
+      if ((e.status === 409 || e.status === 422) && this.retries < 3) { this.retries++; this.cfg.sha = null; this.again = true; }
+      else this.set(e.status ? 'error' : 'offline', syncErr(e));
+    } finally {
+      this.busy = false; this.lastRun = Date.now();
+      if (this.again) { this.again = false; setTimeout(() => this.run(), 600); }
+    }
+  }
+};
+function refreshAfterSync() {
+  const a = document.activeElement;
+  const typing = a && /INPUT|TEXTAREA|SELECT/.test(a.tagName) && (a.closest('#main') || a.closest('#modal'));
+  if (typing || !$('#modal').hidden) { renderSidebar(); return; }   // nicht beim Schreiben stören
+  render();
+}
+function syncStatusText() {
+  if (!Sync.on) return '';
+  const t = Sync.cfg.lastSync ? new Date(Sync.cfg.lastSync).toLocaleString('de-DE', { dateStyle: 'short', timeStyle: 'short' }) : 'noch nie';
+  const map = {
+    ok: '✅ Alles synchronisiert · zuletzt ' + t,
+    pending: '⏳ Änderungen werden gleich hochgeladen …',
+    syncing: '🔄 Synchronisiere …',
+    offline: '📴 ' + esc(Sync.msg || 'Offline') + ' Zuletzt synchronisiert: ' + t,
+    error: '⚠️ ' + esc(Sync.msg)
+  };
+  return map[Sync.state] || '';
+}
+function renderSyncPill() {
+  const p = $('#syncPill'); if (!p) return;
+  if (!Sync.on) { p.hidden = true; return; }
+  const labels = { ok: 'Synchronisiert', pending: 'Ungesichert', syncing: 'Sync …', offline: 'Offline', error: 'Sync-Fehler' };
+  p.hidden = false;
+  p.className = 'sync-pill ' + Sync.state;
+  p.title = (Sync.msg || labels[Sync.state]) + ' – klicken zum Synchronisieren';
+  p.innerHTML = `<span class="dot"></span>${labels[Sync.state] || ''}`;
+}
+async function connectSync(f) {
+  const cfg = {
+    owner: f.owner.value.trim(), repo: f.repo.value.trim(),
+    path: (f.path.value.trim() || 'lerntagebuch.json').replace(/^\/+/, ''),
+    token: f.token.value.trim(), device: f.device.value.trim() || guessDevice(),
+    sha: null, dirty: false, lastSync: null
+  };
+  if (!cfg.owner || !cfg.repo || !cfg.token) { toast('Bitte Benutzername, Repository und Token ausfüllen'); return; }
+  const btn = $('#syncConnectBtn'); btn.disabled = true; btn.textContent = 'Prüfe Verbindung …';
+  const done = () => { btn.disabled = false; btn.textContent = 'Verbinden'; };
+  try {
+    const repo = await gh.repo(cfg);
+    if (!repo.private) {
+      done();
+      openModal(`<h2>Repository ist öffentlich</h2><p class="subtle">„${esc(cfg.owner)}/${esc(cfg.repo)}“ ist öffentlich – jeder könnte dein Tagebuch lesen. Stelle es auf GitHub unter <b>Settings → General → Danger Zone → Change visibility</b> auf <b>Private</b> und verbinde dich dann erneut.</p>
+        <div class="modal-actions"><button class="btn primary" data-action="modal-close">Verstanden</button></div>`);
+      return;
+    }
+    const remote = await gh.getFile(cfg);
+    if (remote) {
+      const choice = await choiceDialog('In GitHub liegen schon Daten',
+        `<b>GitHub:</b> ${countText(remote.data)}<br><b>Dieses Gerät:</b> ${countText(db)}<br><br>Für ein neues Gerät nimm „GitHub-Daten übernehmen“. „Zusammenführen“ behält beides.`,
+        [['merge', 'Zusammenführen'], ['remote', 'GitHub-Daten übernehmen', true]]);
+      if (!choice) { done(); return; }
+      if (choice === 'remote') {
+        remote.data.settings = db.settings; db = remote.data; resetSnap(); persist();
+        cfg.sha = remote.sha;
+      }
+    } else cfg.dirty = true;
+    Sync.cfg = cfg; Sync.store();
+    await Sync.run();
+    render();
+    toast(Sync.state === 'ok' ? 'Verbunden – dein Tagebuch ist jetzt in GitHub gesichert ☁️' : 'Verbunden, aber: ' + Sync.msg);
+  } catch (e) { done(); toast(syncErr(e)); }
+}
+const makeCode = c => 'LTB1:' + b64enc(JSON.stringify({ owner: c.owner, repo: c.repo, path: c.path, token: c.token }));
+function readCode(s) {
+  s = s.trim(); if (!s.startsWith('LTB1:')) return null;
+  try { return JSON.parse(b64dec(s.slice(5))); } catch (e) { return null; }
+}
+
+/* ---------- UI-Helfer ---------- */
+let toastTimer;
+function toast(msg) {
+  const t = $('#toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+}
+let modalResolve = null;
+function openModal(html, wide = false) {
+  if (modalResolve) { const r = modalResolve; modalResolve = null; r(null); }
+  const m = $('#modal');
+  m.innerHTML = `<div class="modal-backdrop" data-action="modal-close"></div><div class="modal-card ${wide ? 'wide' : ''}" role="dialog" aria-modal="true">${html}</div>`;
+  m.hidden = false; document.body.classList.add('modal-open');
+  const f = $('[autofocus]', m); if (f) { f.focus(); if (f.select && f.value) f.select(); }
+}
+function closeModal(val = null) {
+  const m = $('#modal'); m.hidden = true; m.innerHTML = ''; document.body.classList.remove('modal-open');
+  if (modalResolve) { const r = modalResolve; modalResolve = null; r(val); }
+}
+function askText(title, value = '', placeholder = '') {
+  openModal(`<h2>${esc(title)}</h2>
+    <form data-form="ask"><input class="input" name="v" value="${esc(value)}" placeholder="${esc(placeholder)}" autofocus required>
+    <div class="modal-actions"><button type="button" class="btn ghost" data-action="modal-close">Abbrechen</button><button class="btn primary">Speichern</button></div></form>`);
+  return new Promise(res => modalResolve = res);
+}
+function confirmDialog(msg, okLabel = 'Löschen') {
+  openModal(`<h2>Bist du sicher?</h2><p class="subtle">${esc(msg)}</p>
+    <div class="modal-actions"><button class="btn ghost" data-action="modal-close" autofocus>Abbrechen</button><button class="btn primary" data-action="modal-ok">${esc(okLabel)}</button></div>`);
+  return new Promise(res => modalResolve = res);
+}
+function choiceDialog(title, html, options) {
+  openModal(`<h2>${esc(title)}</h2><p class="subtle">${html}</p>
+    <div class="modal-actions"><button class="btn ghost" data-action="modal-close">Abbrechen</button>
+    ${options.map(([v, l, primary]) => `<button class="btn ${primary ? 'primary' : ''}" data-action="modal-choice" data-v="${v}">${esc(l)}</button>`).join('')}</div>`);
+  return new Promise(res => modalResolve = res);
+}
+function tagChips(tags, clickable = true) {
+  return (tags || []).map(t => clickable
+    ? `<button class="chip" data-action="tag-filter" data-tag="${esc(t)}">#${esc(t)}</button>`
+    : `<span class="chip">#${esc(t)}</span>`).join('');
+}
+function tagField(kind, id, tags) {
+  return `<div class="tag-field" data-kind="${kind}" data-id="${esc(id || '')}">
+    ${(tags || []).map((t, i) => `<span class="chip">#${esc(t)}<button class="x" data-action="tag-remove" data-i="${i}" aria-label="Tag entfernen">×</button></span>`).join('')}
+    <input list="allTags" placeholder="${tags && tags.length ? '' : '+ Tag hinzufügen (Enter)'}" aria-label="Tag hinzufügen">
+  </div>`;
+}
+
+/* =========================================================
+   Rendering
+   ========================================================= */
+const NAV = [
+  ['today', 'Heute', 'today'], ['timeline', 'Zeitleiste', 'calendar'], ['questions', 'Fragen', 'help'],
+  ['lexicon', 'Lexikon', 'book'], ['search', 'Suche', 'search'], ['settings', 'Einstellungen', 'settings']
+];
+function renderSidebar() {
+  const open = db.questions.filter(q => q.status !== 'geklärt').length;
+  const s = streak();
+  $('#sidebar').innerHTML = `
+    <div class="brand"><div class="brand-logo">${icon('sparkle')}</div><div><b>Lerntagebuch</b><small>Claude lernen, Tag für Tag</small></div></div>
+    ${NAV.map(([v, label, ic]) => `<button class="nav-btn ${ui.view === v ? 'active' : ''}" data-action="nav" data-view="${v}" ${ui.view === v ? 'aria-current="page"' : ''}>
+      ${icon(ic)}<span>${label}</span>
+      ${v === 'questions' && open ? `<span class="badge">${open}</span>` : ''}
+      ${v === 'search' ? '<kbd>Strg K</kbd>' : ''}</button>`).join('')}
+    <div class="side-foot">
+      <div class="streak"><span class="flame">${s ? '🔥' : '🌱'}</span><div><b>${s} ${s === 1 ? 'Tag' : 'Tage'} in Folge</b><span>${db.entries.length} Lerntage gesamt</span></div></div>
+    </div>`;
+}
+
+function render() {
+  pruneEmpty();
+  applyTheme();
+  renderSidebar();
+  $('#allTags').innerHTML = allTags().map(([t]) => `<option value="${esc(t)}">`).join('');
+  const views = { today: viewToday, timeline: viewTimeline, questions: viewQuestions, lexicon: viewLexicon, search: viewSearch, settings: viewSettings };
+  $('#main').innerHTML = backupBanner() + (views[ui.view] || viewToday)();
+  if (ui.view === 'today') autosize($('#entryNotes'));
+  if (ui.view === 'search') renderSearchResults();
+}
+
+function backupBanner() {
+  if (ui.bannerHidden || db.entries.length < 3) return '';
+  const last = db.settings.lastBackup;
+  if (last && Date.now() - last < 14 * 864e5) return '';
+  return `<div class="banner">💾 <span>${last ? 'Dein letztes Backup ist über zwei Wochen alt.' : 'Du hast noch kein Backup erstellt.'} Deine Daten liegen nur in diesem Browser.</span>
+    <span class="spacer"></span><button class="btn sm primary" data-action="export">Backup exportieren</button><button class="icon-btn sm" data-action="banner-hide" aria-label="Ausblenden">${icon('x', 'sm')}</button></div>`;
+}
+
+/* ---------- Heute ---------- */
+function viewToday() {
+  const e = entryByDate(ui.date);
+  const isToday = ui.date === todayStr();
+  const eyebrow = isToday ? 'Heute' : ui.date === shiftDate(todayStr(), -1) ? 'Gestern' : 'Lerntag';
+  const qs = e ? db.questions.filter(q => q.entryId === e.id) : [];
+  const terms = e ? db.terms.filter(t => t.entryIds.includes(e.id)).sort(byName) : [];
+  const preview = ui.notesTab === 'preview';
+  return `
+  <header class="page-head">
+    <div><p class="eyebrow">${eyebrow}</p><h1>${esc(fmtLong(ui.date))}</h1></div>
+    <div class="day-nav">
+      <button class="icon-btn sm" data-action="day-shift" data-n="-1" aria-label="Vorheriger Tag">${icon('left', 'sm')}</button>
+      <input type="date" id="dayPicker" value="${ui.date}" aria-label="Datum wählen">
+      ${isToday ? '' : '<button class="btn sm ghost" data-action="day-today">Heute</button>'}
+      <button class="icon-btn sm" data-action="day-shift" data-n="1" aria-label="Nächster Tag">${icon('right', 'sm')}</button>
+    </div>
+  </header>
+
+  <section class="card">
+    <input class="title-input" id="entryTitle" placeholder="Was hast du heute gelernt?" value="${esc(e ? e.title : '')}">
+    ${tagField('entry', e ? e.id : '', e ? e.tags : [])}
+    <div class="editor-tabs">
+      <div class="seg">
+        <button class="${preview ? '' : 'active'}" data-action="notes-tab" data-tab="write">Schreiben</button>
+        <button class="${preview ? 'active' : ''}" data-action="notes-tab" data-tab="preview">Vorschau</button>
+      </div>
+      <span class="spacer"></span>
+      <button class="btn sm" data-action="sel-to-term" title="Markierten Text als Lexikon-Begriff übernehmen">${icon('book', 'sm')} → Lexikon-Begriff</button>
+    </div>
+    <textarea class="textarea notes ${preview ? 'hidden' : ''}" id="entryNotes" placeholder="Deine Notizen … (Markdown möglich: **fett**, - Liste, \`Code\`, ## Überschrift)">${esc(e ? e.notes : '')}</textarea>
+    <div class="preview md ${preview ? '' : 'hidden'}" id="notesPreview">${e && e.notes.trim() ? md(e.notes) : '<p class="subtle">Noch nichts geschrieben.</p>'}</div>
+    <div class="row" style="margin-top:6px">
+      <p class="save-state" id="saveState">${e ? 'Automatisch gespeichert' : 'Wird automatisch gespeichert, sobald du schreibst'}</p>
+      <span class="spacer"></span>
+      ${e ? `<button class="btn sm ghost danger" data-action="entry-delete">${icon('trash', 'sm')} Eintrag löschen</button>` : ''}
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><h2>Fragen, die ich klären will</h2><span class="subtle">${qs.filter(q => q.status !== 'geklärt').length} offen</span></div>
+    <form class="add-row" data-form="add-question" data-entry="1">
+      <input class="input" name="q" placeholder="Neue Frage notieren …" autocomplete="off">
+      <button class="btn primary">${icon('plus', 'sm')} Hinzufügen</button>
+    </form>
+    <div class="q-list">${qs.map(q => questionCard(q, true)).join('') || '<p class="subtle">Keine Fragen zu diesem Tag.</p>'}</div>
+  </section>
+
+  <section class="card">
+    <div class="card-head"><h2>Begriffe von diesem Tag</h2><button class="btn sm" data-action="term-new-today">${icon('plus', 'sm')} Begriff</button></div>
+    <div class="chips">${terms.map(t => `<button class="chip sage" data-action="term-open" data-id="${t.id}">${esc(t.name)}</button>`).join('') || '<p class="subtle">Noch keine Begriffe mit diesem Tag verknüpft.</p>'}</div>
+  </section>`;
+}
+function autosize(el) {
+  if (!el) return;
+  el.style.height = 'auto';
+  el.style.height = Math.max(280, el.scrollHeight + 4) + 'px';
+}
+
+/* ---------- Fragen ---------- */
+function questionCard(q, compact = false) {
+  const done = q.status === 'geklärt';
+  const e = q.entryId ? entryById(q.entryId) : null;
+  const editing = ui.editingAnswer === q.id;
+  return `<div class="q-card ${done ? 'geklärt' : ''}">
+    <button class="check" data-action="q-toggle" data-id="${q.id}" aria-label="${done ? 'Wieder öffnen' : 'Als geklärt markieren'}">${icon('check')}</button>
+    <div class="q-body">
+      <p class="q-text">${esc(q.text)}</p>
+      <div class="q-meta">
+        ${e && !compact ? `<button data-action="goto-day" data-date="${e.date}">${esc(fmtShort(e.date))}</button>` : ''}
+        ${done && q.resolvedAt ? `<span>geklärt am ${new Date(q.resolvedAt).toLocaleDateString('de-DE')}</span>` : ''}
+        ${!editing ? `<button data-action="q-answer-edit" data-id="${q.id}">${q.answer ? 'Antwort bearbeiten' : 'Antwort notieren'}</button>` : ''}
+      </div>
+      ${editing ? `<div style="margin-top:10px">
+          <textarea class="textarea" rows="4" data-answer-for="${q.id}" placeholder="Was hast du herausgefunden? (Markdown möglich)">${esc(q.answer)}</textarea>
+          <div class="row" style="margin-top:8px"><button class="btn sm primary" data-action="q-answer-save" data-id="${q.id}">Speichern</button><button class="btn sm ghost" data-action="q-answer-cancel">Abbrechen</button></div>
+        </div>`
+      : q.answer ? `<div class="q-answer"><div class="q-answer-label">Antwort</div><div class="md">${md(q.answer)}</div></div>` : ''}
+    </div>
+    <button class="icon-btn sm" data-action="q-delete" data-id="${q.id}" aria-label="Frage löschen">${icon('trash', 'sm')}</button>
+  </div>`;
+}
+function viewQuestions() {
+  const open = db.questions.filter(q => q.status !== 'geklärt');
+  const done = db.questions.filter(q => q.status === 'geklärt');
+  const list = ui.qFilter === 'offen' ? open : ui.qFilter === 'geklärt' ? done : db.questions;
+  const sorted = [...list].sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  return `
+  <header class="page-head"><div><p class="eyebrow">Neugier sammeln</p><h1>Fragen</h1></div></header>
+  <section class="card">
+    <form class="add-row" data-form="add-question">
+      <input class="input" name="q" placeholder="Was möchtest du noch herausfinden?" autocomplete="off">
+      <button class="btn primary">${icon('plus', 'sm')} Hinzufügen</button>
+    </form>
+    <div class="seg" style="margin-bottom:16px">
+      ${[['offen', 'Offen', open.length], ['geklärt', 'Geklärt', done.length], ['alle', 'Alle', db.questions.length]]
+        .map(([k, l, n]) => `<button class="${ui.qFilter === k ? 'active' : ''}" data-action="q-filter" data-f="${k}">${l}<span class="n">${n}</span></button>`).join('')}
+    </div>
+    <div class="q-list">${sorted.map(q => questionCard(q)).join('') ||
+      `<div class="empty"><span class="big">${ui.qFilter === 'offen' ? '🎉' : '💭'}</span>${ui.qFilter === 'offen' ? 'Keine offenen Fragen – alles geklärt!' : 'Hier ist noch nichts.'}</div>`}</div>
+  </section>`;
+}
+
+/* ---------- Zeitleiste ---------- */
+function viewTimeline() {
+  const [y, m] = ui.calMonth.split('-').map(Number);
+  const first = new Date(y, m - 1, 1);
+  const offset = (first.getDay() + 6) % 7;
+  const days = new Date(y, m, 0).getDate();
+  const set = new Set(db.entries.map(e => e.date));
+  const today = todayStr();
+  let cells = '';
+  for (let i = 0; i < offset; i++) cells += '<span class="cal-day blank"></span>';
+  for (let d = 1; d <= days; d++) {
+    const ds = `${y}-${pad(m)}-${pad(d)}`;
+    cells += `<button class="cal-day ${set.has(ds) ? 'has' : ''} ${ds === today ? 'today' : ''} ${ds === ui.date ? 'sel' : ''}" data-action="goto-day" data-date="${ds}" aria-label="${fmtLong(ds)}">${d}</button>`;
+  }
+  const monthName = first.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
+  let entries = [...db.entries].sort((a, b) => b.date.localeCompare(a.date));
+  if (ui.tagFilter) entries = entries.filter(e => e.tags.includes(ui.tagFilter));
+  const openQ = db.questions.filter(q => q.status !== 'geklärt').length;
+  return `
+  <header class="page-head"><div><p class="eyebrow">Rückblick</p><h1>Zeitleiste</h1></div></header>
+  <div class="stats">
+    <div class="stat"><b>${db.entries.length}</b><span>Lerntage</span></div>
+    <div class="stat"><b>${streak()}</b><span>Tage in Folge</span></div>
+    <div class="stat"><b>${db.terms.length}</b><span>Lexikon-Begriffe</span></div>
+    <div class="stat"><b>${openQ}</b><span>offene Fragen</span></div>
+  </div>
+  <section class="card">
+    <div class="cal-head">
+      <button class="icon-btn" data-action="cal-shift" data-n="-1" aria-label="Vorheriger Monat">${icon('left')}</button>
+      <h2>${esc(monthName)}</h2>
+      <button class="icon-btn" data-action="cal-shift" data-n="1" aria-label="Nächster Monat">${icon('right')}</button>
+    </div>
+    <div class="cal-grid">${['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'].map(w => `<span class="cal-wd">${w}</span>`).join('')}${cells}</div>
+  </section>
+  <div class="card-head" style="margin-top:28px">
+    <h2>Alle Einträge</h2>
+    <div class="chips">${allTags().slice(0, 12).map(([t]) => `<button class="chip ${ui.tagFilter === t ? 'active' : 'outline'}" data-action="timeline-tag" data-tag="${esc(t)}">#${esc(t)}</button>`).join('')}</div>
+  </div>
+  <div class="entry-list">${entries.map(entryCard).join('') || '<div class="empty"><span class="big">📓</span>Noch keine Einträge' + (ui.tagFilter ? ' mit diesem Tag' : '') + '.</div>'}</div>`;
+}
+function entryCard(e) {
+  const d = parseDate(e.date);
+  const qn = db.questions.filter(q => q.entryId === e.id).length;
+  const tn = db.terms.filter(t => t.entryIds.includes(e.id)).length;
+  return `<button class="entry-card" data-action="goto-day" data-date="${e.date}">
+    <div class="date-badge"><b>${d.getDate()}</b><span>${d.toLocaleDateString('de-DE', { month: 'short' })}</span></div>
+    <div class="body">
+      <h3>${esc(e.title || 'Ohne Titel')}</h3>
+      <p class="excerpt">${esc(plain(e.notes).slice(0, 220)) || '—'}</p>
+      <div class="chips">${tagChips(e.tags, false)}</div>
+      <div class="counts"><span>${d.toLocaleDateString('de-DE', { weekday: 'long', year: 'numeric' })}</span>${qn ? `<span>💭 ${qn} ${qn === 1 ? 'Frage' : 'Fragen'}</span>` : ''}${tn ? `<span>📖 ${tn} ${tn === 1 ? 'Begriff' : 'Begriffe'}</span>` : ''}</div>
+    </div>
+  </button>`;
+}
+
+/* ---------- Lexikon ---------- */
+function viewLexicon() {
+  return `
+  <header class="page-head">
+    <div><p class="eyebrow">Wissen ordnen</p><h1>Lexikon</h1></div>
+    <div class="row">
+      <div class="seg">
+        <button class="${ui.lexMode === 'tree' ? 'active' : ''}" data-action="lex-mode" data-m="tree">Themen</button>
+        <button class="${ui.lexMode === 'az' ? 'active' : ''}" data-action="lex-mode" data-m="az">A–Z</button>
+      </div>
+      <button class="btn primary" data-action="term-new">${icon('plus', 'sm')} Begriff</button>
+    </div>
+  </header>
+  ${ui.lexMode === 'tree' ? lexTree() : lexAZ()}`;
+}
+function lexTree() {
+  const roots = childTopics(null);
+  const loose = termsIn(null);
+  return `<section class="card">
+    <div class="card-head"><p class="subtle">Ziehe Begriffe per Drag &amp; Drop in ein anderes Kapitel oder an eine andere Position.</p>
+      <button class="btn sm" data-action="topic-new">${icon('folder', 'sm')} Neues Kapitel</button></div>
+    ${roots.map(t => topicBlock(t, 1)).join('')}
+    ${loose.length || !roots.length ? `<div class="topic">
+      <div class="topic-head" data-drop-topic=""><span class="name subtle">Ohne Kapitel</span><span class="count">${loose.length}</span></div>
+      <div class="term-list" data-drop-topic="">${loose.map(termRow).join('') || '<p class="subtle" style="padding:4px 4px 8px">Lege ein Kapitel an und füge Begriffe hinzu.</p>'}</div></div>` : ''}
+  </section>`;
+}
+function topicBlock(t, depth) {
+  const terms = termsIn(t.id);
+  return `<div class="topic">
+    <div class="topic-head" data-drop-topic="${t.id}">
+      <span class="name">${esc(t.name)}</span><span class="count">${countTermsDeep(t.id)}</span>
+      <div class="topic-actions">
+        <button class="icon-btn sm" data-action="topic-move" data-id="${t.id}" data-n="-1" aria-label="Nach oben" title="Nach oben">${icon('up', 'sm')}</button>
+        <button class="icon-btn sm" data-action="topic-move" data-id="${t.id}" data-n="1" aria-label="Nach unten" title="Nach unten">${icon('down', 'sm')}</button>
+        <button class="icon-btn sm" data-action="term-new" data-topic="${t.id}" aria-label="Begriff hinzufügen" title="Begriff hinzufügen">${icon('plus', 'sm')}</button>
+        ${depth < 3 ? `<button class="icon-btn sm" data-action="topic-new" data-parent="${t.id}" aria-label="Unterkapitel" title="Unterkapitel anlegen">${icon('folder', 'sm')}</button>` : ''}
+        <button class="icon-btn sm" data-action="topic-rename" data-id="${t.id}" aria-label="Umbenennen" title="Umbenennen">${icon('edit', 'sm')}</button>
+        <button class="icon-btn sm" data-action="topic-delete" data-id="${t.id}" aria-label="Kapitel löschen" title="Löschen">${icon('trash', 'sm')}</button>
+      </div>
+    </div>
+    <div class="term-list" data-drop-topic="${t.id}">${terms.map(termRow).join('')}</div>
+    ${childTopics(t.id).map(c => topicBlock(c, depth + 1)).join('')}
+  </div>`;
+}
+function termRow(t) {
+  return `<div class="term-row" draggable="true" data-term-id="${t.id}" data-action="term-open" data-id="${t.id}" tabindex="0">
+    <span class="grip">${icon('grip', 'sm')}</span><b>${esc(t.name)}</b><small>${esc(plain(t.definition).slice(0, 120))}</small></div>`;
+}
+function lexAZ() {
+  const sorted = [...db.terms].sort(byName);
+  const groups = {};
+  sorted.forEach(t => { let l = fold(t.name).charAt(0).toUpperCase(); if (!/[A-Z]/.test(l)) l = '#'; (groups[l] = groups[l] || []).push(t); });
+  const letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ#'.split('');
+  return `<section class="card">
+    <div class="az-bar">${letters.map(l => `<button data-action="az-jump" data-l="${l}" ${groups[l] ? '' : 'disabled'}>${l}</button>`).join('')}</div>
+    ${sorted.length ? letters.filter(l => groups[l]).map(l => `<h3 class="az-letter" id="az-${l === '#' ? 'num' : l}">${l}</h3>
+      <div class="term-list" style="padding-left:0">${groups[l].map(t => `<div class="term-row" data-action="term-open" data-id="${t.id}" tabindex="0">
+        <b>${esc(t.name)}</b><small>${esc(topicPath(t.topicId).join(' › ') || 'Ohne Kapitel')}</small></div>`).join('')}</div>`).join('')
+      : '<div class="empty"><span class="big">📖</span>Noch keine Begriffe im Lexikon.</div>'}
+  </section>`;
+}
+
+function openTermView(id) {
+  const t = db.terms.find(x => x.id === id); if (!t) return;
+  const path = topicPath(t.topicId);
+  const entries = t.entryIds.map(entryById).filter(Boolean).sort((a, b) => a.date.localeCompare(b.date));
+  openModal(`
+    <p class="crumbs">${esc(path.join(' › ') || 'Ohne Kapitel')}</p>
+    <h2 style="font-size:1.6rem">${esc(t.name)}</h2>
+    <div class="chips" style="margin:8px 0 14px">${tagChips(t.tags)}</div>
+    <div class="md">${t.definition.trim() ? md(t.definition) : '<p class="subtle">Noch keine Erklärung.</p>'}</div>
+    <label class="lbl">Gelernt am</label>
+    <div class="chips">${entries.map(e => `<button class="chip sun" data-action="goto-day" data-date="${e.date}">${esc(fmtShort(e.date))}</button>`).join('') || '<span class="subtle">Mit keinem Tag verknüpft.</span>'}</div>
+    <div class="modal-actions"><button class="btn ghost" data-action="modal-close">Schließen</button><button class="btn primary" data-action="term-edit" data-id="${t.id}" autofocus>${icon('edit', 'sm')} Bearbeiten</button></div>`, true);
+}
+function openTermEditor(draft) {
+  ui.termDraft = draft; ui.defTab = 'write';
+  renderTermEditor();
+}
+function renderTermEditor() {
+  const d = ui.termDraft;
+  const preview = ui.defTab === 'preview';
+  const linked = d.entryIds.map(entryById).filter(Boolean).sort((a, b) => a.date.localeCompare(b.date));
+  const others = [...db.entries].filter(e => !d.entryIds.includes(e.id)).sort((a, b) => b.date.localeCompare(a.date));
+  openModal(`
+    <h2>${d.id ? 'Begriff bearbeiten' : 'Neuer Begriff'}</h2>
+    <form data-form="term" id="termForm">
+      <label class="lbl" for="tName">Begriff</label>
+      <input class="input" id="tName" name="name" value="${esc(d.name)}" required ${d.name ? '' : 'autofocus'} placeholder="z. B. Kontextfenster">
+      <label class="lbl" for="tTopic">Kapitel</label>
+      <select class="input" id="tTopic" name="topicId">
+        <option value="">Ohne Kapitel</option>
+        ${flatTopics().map(({ t, depth }) => `<option value="${t.id}" ${d.topicId === t.id ? 'selected' : ''}>${' '.repeat(depth)}${esc(t.name)}</option>`).join('')}
+      </select>
+      <div class="row" style="margin:14px 0 6px">
+        <span class="lbl" style="margin:0">Erklärung</span><span class="spacer"></span>
+        <div class="seg"><button type="button" class="${preview ? '' : 'active'}" data-action="def-tab" data-tab="write">Schreiben</button><button type="button" class="${preview ? 'active' : ''}" data-action="def-tab" data-tab="preview">Vorschau</button></div>
+      </div>
+      <textarea class="textarea ${preview ? 'hidden' : ''}" name="definition" rows="7" placeholder="Was bedeutet das? Beispiele, Befehle, Merksätze … (Markdown)" ${d.name ? 'autofocus' : ''}>${esc(d.definition)}</textarea>
+      <div class="preview md ${preview ? '' : 'hidden'}" style="min-height:160px">${d.definition.trim() ? md(d.definition) : '<p class="subtle">Noch nichts geschrieben.</p>'}</div>
+      <label class="lbl" for="tTags">Tags <span style="font-weight:400">(mit Komma trennen)</span></label>
+      <input class="input" id="tTags" name="tags" list="allTags" value="${esc(d.tags.join(', '))}" placeholder="z. B. Grundlagen, Claude Code">
+      <label class="lbl">Gelernt am</label>
+      <div class="chips" style="margin-bottom:8px">${linked.map(e => `<span class="chip sun">${esc(fmtShort(e.date))}<button type="button" class="x" data-action="draft-unlink" data-id="${e.id}" aria-label="Verknüpfung entfernen">×</button></span>`).join('') || '<span class="subtle">Mit keinem Tag verknüpft.</span>'}</div>
+      ${others.length ? `<select class="input" id="tLink" aria-label="Mit Tag verknüpfen"><option value="">+ Mit einem Lerntag verknüpfen …</option>${others.map(e => `<option value="${e.id}">${esc(fmtShort(e.date))} – ${esc(e.title || 'Ohne Titel')}</option>`).join('')}</select>` : ''}
+      <div class="modal-actions">
+        ${d.id ? `<button type="button" class="btn ghost danger" data-action="term-delete" data-id="${d.id}" style="margin-right:auto">${icon('trash', 'sm')} Löschen</button>` : ''}
+        <button type="button" class="btn ghost" data-action="modal-close">Abbrechen</button>
+        <button class="btn primary">Speichern</button>
+      </div>
+    </form>`, true);
+}
+function syncDraft() {
+  const f = $('#termForm'); if (!f || !ui.termDraft) return;
+  Object.assign(ui.termDraft, {
+    name: f.name.value, topicId: f.topicId.value || null, definition: f.definition.value,
+    tags: f.tags.value.split(',').map(s => s.trim().replace(/^#/, '')).filter(Boolean)
+  });
+}
+function newTermDraft(over = {}) {
+  return { id: null, name: '', topicId: ui.lastTopic || null, definition: '', tags: [], entryIds: [], ...over };
+}
+
+/* ---------- Suche ---------- */
+function viewSearch() {
+  const tags = allTags();
+  return `
+  <header class="page-head"><div><p class="eyebrow">Wiederfinden</p><h1>Suche</h1></div></header>
+  <div class="search-box">${icon('search')}<input class="input" id="searchInput" type="search" placeholder="Einträge, Fragen und Begriffe durchsuchen …" value="${esc(ui.search)}" autocomplete="off"></div>
+  ${tags.length ? `<div class="chips" style="margin-bottom:20px">${tags.map(([t, n]) => `<button class="chip ${ui.tagFilter === t ? 'active' : 'outline'}" data-action="search-tag" data-tag="${esc(t)}">#${esc(t)} <span style="opacity:.6">${n}</span></button>`).join('')}</div>` : ''}
+  <div id="searchResults"></div>`;
+}
+function hl(text, q) {
+  let h = esc(text);
+  const words = q.trim().split(/\s+/).filter(Boolean).map(w => esc(w).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  return words.length ? h.replace(new RegExp('(' + words.join('|') + ')', 'gi'), '<mark>$1</mark>') : h;
+}
+function snippet(text, q) {
+  const p = plain(text); if (!p) return '';
+  const w = q.trim().split(/\s+/)[0] || '';
+  const i = w ? p.toLowerCase().indexOf(w.toLowerCase()) : 0;
+  const start = Math.max(0, i - 60);
+  return (start > 0 ? '… ' : '') + p.slice(start, start + 180) + (p.length > start + 180 ? ' …' : '');
+}
+function renderSearchResults() {
+  const box = $('#searchResults'); if (!box) return;
+  const q = ui.search.trim();
+  const words = q.toLowerCase().split(/\s+/).filter(Boolean);
+  const tag = ui.tagFilter;
+  if (!words.length && !tag) { box.innerHTML = '<div class="empty"><span class="big">🔎</span>Tippe einen Suchbegriff oder wähle einen Tag.</div>'; return; }
+  const hit = s => words.every(w => s.toLowerCase().includes(w));
+  const entries = db.entries.filter(e => (!tag || e.tags.includes(tag)) && hit([e.title, e.notes, e.tags.join(' ')].join(' ')))
+    .sort((a, b) => b.date.localeCompare(a.date));
+  const terms = db.terms.filter(t => (!tag || t.tags.includes(tag)) && hit([t.name, t.definition, t.tags.join(' '), topicPath(t.topicId).join(' ')].join(' '))).sort(byName);
+  const qs = db.questions.filter(x => {
+    const e = x.entryId ? entryById(x.entryId) : null;
+    return (!tag || (e && e.tags.includes(tag))) && hit([x.text, x.answer].join(' '));
+  });
+  const total = entries.length + terms.length + qs.length;
+  if (!total) { box.innerHTML = '<div class="empty"><span class="big">🤔</span>Nichts gefunden.</div>'; return; }
+  box.innerHTML = `<p class="subtle">${total} ${total === 1 ? 'Treffer' : 'Treffer'}</p>
+    ${terms.length ? `<div class="result-group"><h3>Lexikon</h3>${terms.map(t => `<button class="result" data-action="term-open" data-id="${t.id}">
+      <span class="kind">${esc(topicPath(t.topicId).join(' › ') || 'Begriff')}</span><h3>${hl(t.name, q)}</h3><p>${hl(snippet(t.definition, q), q)}</p></button>`).join('')}</div>` : ''}
+    ${entries.length ? `<div class="result-group"><h3>Tagebuch</h3>${entries.map(e => `<button class="result" data-action="goto-day" data-date="${e.date}">
+      <span class="kind">${esc(fmtLong(e.date))}</span><h3>${hl(e.title || 'Ohne Titel', q)}</h3><p>${hl(snippet(e.notes, q), q)}</p></button>`).join('')}</div>` : ''}
+    ${qs.length ? `<div class="result-group"><h3>Fragen</h3>${qs.map(x => `<button class="result" data-action="nav-question" data-id="${x.id}">
+      <span class="kind">${x.status === 'geklärt' ? '✓ geklärt' : 'offen'}</span><h3>${hl(x.text, q)}</h3>${x.answer ? `<p>${hl(snippet(x.answer, q), q)}</p>` : ''}</button>`).join('')}</div>` : ''}`;
+}
+
+/* ---------- Einstellungen ---------- */
+function viewSettings() {
+  const th = db.settings.theme;
+  const last = db.settings.lastBackup;
+  return `
+  <header class="page-head"><div><p class="eyebrow">Alles im Griff</p><h1>Einstellungen</h1></div></header>
+  ${syncSection()}
+  <section class="card">
+    <div class="setting"><div><h3>Erscheinungsbild</h3><p>Hell, dunkel oder wie dein System.</p></div>
+      <div class="seg">${[['system', 'System'], ['light', 'Hell'], ['dark', 'Dunkel']].map(([k, l]) => `<button class="${th === k ? 'active' : ''}" data-action="theme" data-t="${k}">${l}</button>`).join('')}</div></div>
+    <div class="setting"><div><h3>Backup exportieren</h3><p>${last ? 'Letztes Backup: ' + new Date(last).toLocaleString('de-DE', { dateStyle: 'medium', timeStyle: 'short' }) : 'Noch kein Backup erstellt.'} Speichert alles als JSON-Datei.</p></div>
+      <button class="btn primary" data-action="export">${icon('download', 'sm')} Exportieren</button></div>
+    <div class="setting"><div><h3>Backup importieren</h3><p>Ersetzt die aktuellen Daten durch eine Backup-Datei.</p></div>
+      <label class="btn">${icon('upload', 'sm')} Datei wählen<input type="file" id="importFile" accept=".json,application/json" hidden></label></div>
+    <div class="setting"><div><h3>Alles zurücksetzen</h3><p>Löscht alle Einträge, Fragen und Begriffe${Sync.on ? ' – auch in GitHub und auf deinen anderen Geräten' : ' in diesem Browser'}.</p></div>
+      <button class="btn danger" data-action="reset">${icon('trash', 'sm')} Zurücksetzen</button></div>
+  </section>
+  <section class="card md">
+    <h2>Markdown-Spickzettel</h2>
+    <p><code>**fett**</code> → <strong>fett</strong> · <code>*kursiv*</code> → <em>kursiv</em> · <code>\`Code\`</code> → <code>Code</code></p>
+    <p><code>## Überschrift</code> · <code>- Listenpunkt</code> · <code>1. Nummeriert</code> · <code>&gt; Zitat / Tipp</code> · <code>[Link](https://…)</code></p>
+    <p>Codeblock: drei Backticks <code>\`\`\`</code> vor und nach dem Code.</p>
+  </section>
+  <p class="subtle" style="font-size:.85rem">${Sync.on
+    ? 'Deine Daten liegen in diesem Browser und werden automatisch mit deinem privaten GitHub-Repository abgeglichen. Jeder Stand bleibt dort in der Versionsgeschichte erhalten.'
+    : 'Deine Daten liegen nur in diesem Browser (localStorage). Verbinde den GitHub-Sync oder exportiere regelmäßig ein Backup.'}</p>`;
+}
+function syncSection() {
+  if (Sync.on) {
+    const c = Sync.cfg;
+    const hist = `https://github.com/${encodeURIComponent(c.owner)}/${encodeURIComponent(c.repo)}/commits/HEAD/${c.path.split('/').map(encodeURIComponent).join('/')}`;
+    return `<section class="card">
+      <div class="card-head"><div><h2>Sync mit GitHub</h2><p class="subtle status-line" id="syncStatus">${syncStatusText()}</p></div>
+        <button class="btn primary" data-action="sync-now">${icon('refresh', 'sm')} Jetzt synchronisieren</button></div>
+      <div class="setting"><div><h3>Verbunden mit</h3><p>${esc(c.owner)}/${esc(c.repo)} · ${esc(c.path)} · Gerät „${esc(c.device)}“</p></div>
+        <a class="btn" href="${hist}" target="_blank" rel="noopener">Versionsverlauf ansehen</a></div>
+      <div class="setting"><div><h3>Weiteres Gerät verbinden</h3><p>Kopiert einen Verbindungscode inklusive Token. Gib ihn nur an dich selbst weiter, z. B. über deinen Passwort-Manager.</p></div>
+        <button class="btn" data-action="sync-code">Verbindungscode kopieren</button></div>
+      <div class="setting"><div><h3>Trennen</h3><p>Entfernt den Token von diesem Gerät. Deine Daten bleiben hier und in GitHub erhalten.</p></div>
+        <button class="btn danger" data-action="sync-disconnect">Trennen</button></div>
+    </section>`;
+  }
+  return `<section class="card">
+    <h2>${icon('cloud')} Sync mit GitHub</h2>
+    <p class="subtle" style="margin:6px 0 4px">Speichert dein Tagebuch in einem <b>privaten</b> GitHub-Repository. So haben PC und Handy immer dieselben Daten. Die Schritt-für-Schritt-Anleitung steht in <b>EINRICHTUNG.md</b>.</p>
+    <form data-form="sync-connect" autocomplete="off">
+      <label class="lbl" for="sCode">Verbindungscode <span style="font-weight:400">(optional, von einem bereits verbundenen Gerät)</span></label>
+      <input class="input" id="sCode" placeholder="LTB1:…" autocomplete="off">
+      <div class="grid2">
+        <div><label class="lbl" for="sOwner">GitHub-Benutzername</label><input class="input" id="sOwner" name="owner" required autocapitalize="off" spellcheck="false"></div>
+        <div><label class="lbl" for="sRepo">Privates Daten-Repository</label><input class="input" id="sRepo" name="repo" value="lerntagebuch-daten" required autocapitalize="off" spellcheck="false"></div>
+        <div><label class="lbl" for="sPath">Dateiname</label><input class="input" id="sPath" name="path" value="lerntagebuch.json" autocapitalize="off" spellcheck="false"></div>
+        <div><label class="lbl" for="sDevice">Name dieses Geräts</label><input class="input" id="sDevice" name="device" value="${guessDevice()}"></div>
+      </div>
+      <label class="lbl" for="sToken">Zugangs-Token (Fine-grained)</label>
+      <input class="input" id="sToken" name="token" type="password" required placeholder="github_pat_…" autocomplete="off" spellcheck="false">
+      <p class="subtle" style="font-size:.85rem;margin-top:6px">Token erstellen: <a href="https://github.com/settings/personal-access-tokens/new" target="_blank" rel="noopener">GitHub → Fine-grained token</a> · nur dieses eine Repository · Berechtigung „Contents: Read and write“. Der Token bleibt nur auf diesem Gerät gespeichert.</p>
+      <div class="modal-actions"><button class="btn primary" id="syncConnectBtn">${icon('cloud', 'sm')} Verbinden</button></div>
+    </form>
+  </section>`;
+}
+function applyTheme() {
+  const t = db.settings.theme;
+  if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t);
+  else document.documentElement.removeAttribute('data-theme');
+}
+function exportData() {
+  db.settings.lastBackup = Date.now(); save();
+  const blob = new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = `lerntagebuch-backup-${todayStr()}.json`;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  toast('Backup heruntergeladen 💾');
+  render();
+}
+
+/* =========================================================
+   Aktionen
+   ========================================================= */
+function go(view, extra = {}) { Object.assign(ui, { view }, extra); render(); window.scrollTo({ top: 0, behavior: 'smooth' }); }
+
+const actions = {
+  nav: el => go(el.dataset.view, el.dataset.view === 'search' ? {} : { tagFilter: el.dataset.view === 'timeline' ? ui.tagFilter : null }),
+  'modal-close': () => closeModal(null),
+  'modal-ok': () => closeModal(true),
+  'modal-choice': el => closeModal(el.dataset.v),
+  'sync-now': () => Sync.run(),
+  'sync-pill': () => { if (Sync.state === 'error') go('settings'); else Sync.run(); },
+  'sync-code': async () => {
+    const code = makeCode(Sync.cfg);
+    try { await navigator.clipboard.writeText(code); toast('Verbindungscode kopiert 📋'); }
+    catch (e) {
+      openModal(`<h2>Verbindungscode</h2><p class="subtle">Kopiere den Code und füge ihn auf dem anderen Gerät unter Einstellungen → Sync ein. Er enthält deinen Token, also nur an dich selbst weitergeben.</p>
+        <textarea class="textarea" rows="4" readonly autofocus onfocus="this.select()">${esc(code)}</textarea>
+        <div class="modal-actions"><button class="btn primary" data-action="modal-close">Fertig</button></div>`);
+    }
+  },
+  'sync-disconnect': async () => {
+    if (!await confirmDialog('Der Token wird von diesem Gerät entfernt. Deine Daten bleiben hier und in GitHub erhalten.', 'Trennen')) return;
+    if (Sync.cfg.dirty) await Sync.run();
+    Sync.cfg = null; Sync.store(); Sync.set('off'); render(); toast('Sync getrennt');
+  },
+  'banner-hide': () => { ui.bannerHidden = true; render(); },
+  export: exportData,
+
+  'day-shift': el => { ui.date = shiftDate(ui.date, +el.dataset.n); ui.calMonth = ui.date.slice(0, 7); render(); },
+  'day-today': () => { ui.date = todayStr(); ui.calMonth = ui.date.slice(0, 7); render(); },
+  'goto-day': el => { closeModal(); go('today', { date: el.dataset.date, calMonth: el.dataset.date.slice(0, 7) }); },
+  'notes-tab': el => {
+    ui.notesTab = el.dataset.tab;
+    const e = entryByDate(ui.date);
+    $('#notesPreview').innerHTML = e && e.notes.trim() ? md(e.notes) : '<p class="subtle">Noch nichts geschrieben.</p>';
+    $('#entryNotes').classList.toggle('hidden', ui.notesTab !== 'write');
+    $('#notesPreview').classList.toggle('hidden', ui.notesTab !== 'preview');
+    $$('[data-action="notes-tab"]').forEach(b => b.classList.toggle('active', b.dataset.tab === ui.notesTab));
+    if (ui.notesTab === 'write') { autosize($('#entryNotes')); $('#entryNotes').focus(); }
+  },
+  'entry-delete': async () => {
+    const e = entryByDate(ui.date); if (!e) return;
+    if (!await confirmDialog('Der Eintrag vom ' + fmtShort(e.date) + ' wird gelöscht. Fragen bleiben erhalten, Begriffe auch.')) return;
+    db.entries = db.entries.filter(x => x.id !== e.id);
+    db.questions.forEach(q => { if (q.entryId === e.id) q.entryId = null; });
+    db.terms.forEach(t => t.entryIds = t.entryIds.filter(id => id !== e.id));
+    save(); render(); toast('Eintrag gelöscht');
+  },
+  'sel-to-term': () => {
+    let sel = '';
+    const ta = $('#entryNotes');
+    if (ta && !ta.classList.contains('hidden')) sel = ta.value.slice(ta.selectionStart, ta.selectionEnd);
+    else sel = String(window.getSelection() || '');
+    sel = sel.replace(/[*`#_>]/g, '').trim().slice(0, 80);
+    const e = ensureEntry(ui.date); save();
+    if (!sel) toast('Tipp: Markiere zuerst ein Wort in deinen Notizen');
+    openTermEditor(newTermDraft({ name: sel, entryIds: [e.id] }));
+  },
+  'term-new-today': () => { const e = ensureEntry(ui.date); save(); openTermEditor(newTermDraft({ entryIds: [e.id] })); },
+
+  'tag-remove': el => {
+    const f = el.closest('.tag-field'); const target = tagTarget(f); if (!target) return;
+    target.tags.splice(+el.dataset.i, 1); save(); render(); focusTagField(f.dataset.kind);
+  },
+  'tag-filter': el => { closeModal(); go('search', { tagFilter: el.dataset.tag, search: '' }); },
+  'search-tag': el => { ui.tagFilter = ui.tagFilter === el.dataset.tag ? null : el.dataset.tag; render(); },
+  'timeline-tag': el => { ui.tagFilter = ui.tagFilter === el.dataset.tag ? null : el.dataset.tag; render(); },
+
+  'q-toggle': el => {
+    const q = db.questions.find(x => x.id === el.dataset.id); if (!q) return;
+    q.status = q.status === 'geklärt' ? 'offen' : 'geklärt';
+    q.resolvedAt = q.status === 'geklärt' ? Date.now() : null;
+    if (q.status === 'geklärt' && !q.answer) ui.editingAnswer = q.id;
+    save(); render();
+    if (q.status === 'geklärt') { toast('Super, eine Frage weniger! ✨'); focusAnswer(q.id); }
+  },
+  'q-answer-edit': el => { ui.editingAnswer = el.dataset.id; render(); focusAnswer(el.dataset.id); },
+  'q-answer-save': el => {
+    const q = db.questions.find(x => x.id === el.dataset.id); const ta = $(`[data-answer-for="${el.dataset.id}"]`);
+    if (q && ta) { q.answer = ta.value.trim(); save(); }
+    ui.editingAnswer = null; render();
+  },
+  'q-answer-cancel': () => { ui.editingAnswer = null; render(); },
+  'q-delete': async el => {
+    if (!await confirmDialog('Diese Frage wird endgültig gelöscht.')) return;
+    db.questions = db.questions.filter(x => x.id !== el.dataset.id); save(); render();
+  },
+  'q-filter': el => { ui.qFilter = el.dataset.f; render(); },
+  'nav-question': el => {
+    const q = db.questions.find(x => x.id === el.dataset.id);
+    go('questions', { qFilter: q && q.status === 'geklärt' ? 'geklärt' : 'offen' });
+  },
+
+  'cal-shift': el => {
+    const [y, m] = ui.calMonth.split('-').map(Number);
+    ui.calMonth = toDateStr(new Date(y, m - 1 + +el.dataset.n, 1)).slice(0, 7); render();
+  },
+
+  'lex-mode': el => { ui.lexMode = el.dataset.m; render(); },
+  'az-jump': el => { const t = $('#az-' + (el.dataset.l === '#' ? 'num' : el.dataset.l)); t && t.scrollIntoView({ behavior: 'smooth' }); },
+  'term-open': el => openTermView(el.dataset.id),
+  'term-new': el => openTermEditor(newTermDraft(el.dataset.topic ? { topicId: el.dataset.topic } : {})),
+  'term-edit': el => { const t = db.terms.find(x => x.id === el.dataset.id); if (t) openTermEditor(JSON.parse(JSON.stringify(t))); },
+  'term-delete': async el => {
+    const t = db.terms.find(x => x.id === el.dataset.id);
+    if (!t || !await confirmDialog(`„${t.name}“ wird aus dem Lexikon gelöscht.`)) return;
+    db.terms = db.terms.filter(x => x.id !== t.id); save(); render(); toast('Begriff gelöscht');
+  },
+  'def-tab': el => { syncDraft(); ui.defTab = el.dataset.tab; const keep = ui.defTab; renderTermEditor(); ui.defTab = keep; },
+  'draft-unlink': el => { syncDraft(); ui.termDraft.entryIds = ui.termDraft.entryIds.filter(id => id !== el.dataset.id); rerenderDraft(); },
+
+  'topic-new': async el => {
+    const parent = el.dataset.parent || null;
+    const name = await askText(parent ? 'Neues Unterkapitel in „' + topicById(parent).name + '“' : 'Neues Kapitel', '', 'z. B. Prompting');
+    if (!name) return;
+    db.topics.push({ id: uid(), name, parentId: parent, order: childTopics(parent).length });
+    save(); render();
+  },
+  'topic-rename': async el => {
+    const t = topicById(el.dataset.id); if (!t) return;
+    const name = await askText('Kapitel umbenennen', t.name); if (!name) return;
+    t.name = name; save(); render();
+  },
+  'topic-delete': async el => {
+    const t = topicById(el.dataset.id); if (!t) return;
+    if (!await confirmDialog(`Kapitel „${t.name}“ löschen? Begriffe und Unterkapitel wandern eine Ebene nach oben.`)) return;
+    db.terms.forEach(x => { if (x.topicId === t.id) x.topicId = t.parentId || null; });
+    db.topics.forEach(x => { if (x.parentId === t.id) x.parentId = t.parentId || null; });
+    db.topics = db.topics.filter(x => x.id !== t.id);
+    childTopics(t.parentId).forEach((x, i) => x.order = i);
+    termsIn(t.parentId).forEach((x, i) => x.order = i);
+    save(); render();
+  },
+  'topic-move': el => {
+    const t = topicById(el.dataset.id); if (!t) return;
+    const sib = childTopics(t.parentId); const i = sib.indexOf(t); const j = i + +el.dataset.n;
+    if (j < 0 || j >= sib.length) return;
+    [sib[i], sib[j]] = [sib[j], sib[i]]; sib.forEach((x, k) => x.order = k);
+    save(); render();
+  },
+
+  theme: el => { db.settings.theme = el.dataset.t; save(); render(); },
+  reset: async () => {
+    if (!await confirmDialog('Wirklich ALLE Daten in diesem Browser löschen? Das kann nicht rückgängig gemacht werden (außer mit einem Backup).', 'Alles löschen')) return;
+    db = normalize({ settings: { theme: db.settings.theme } }); save(); go('today', { date: todayStr() }); toast('Alles zurückgesetzt');
+  }
+};
+function rerenderDraft() { const keep = ui.defTab; renderTermEditor(); ui.defTab = keep; }
+function focusAnswer(id) { const ta = $(`[data-answer-for="${id}"]`); if (ta) ta.focus(); }
+function tagTarget(field) {
+  if (!field) return null;
+  if (field.dataset.kind === 'entry') return ensureEntry(ui.date);
+  return null;
+}
+function focusTagField(kind) { const i = $(`.tag-field[data-kind="${kind}"] input`); if (i) i.focus(); }
+
+/* ---------- Events ---------- */
+document.addEventListener('click', e => {
+  const el = e.target.closest('[data-action]');
+  if (!el) return;
+  if (el.closest('.term-row') && el !== el.closest('.term-row') && el.dataset.action !== 'term-open') return;
+  const fn = actions[el.dataset.action];
+  if (fn) { e.preventDefault(); fn(el, e); }
+});
+
+document.addEventListener('input', e => {
+  const t = e.target;
+  if (t.id === 'entryTitle' || t.id === 'entryNotes') {
+    const en = ensureEntry(ui.date);
+    if (t.id === 'entryTitle') en.title = t.value; else { en.notes = t.value; autosize(t); }
+    en.updatedAt = Date.now(); saveSoon();
+  } else if (t.id === 'searchInput') {
+    ui.search = t.value; renderSearchResults();
+  } else if (t.id === 'sCode') {
+    const c = readCode(t.value);
+    if (c) {
+      const f = t.form;
+      f.owner.value = c.owner || ''; f.repo.value = c.repo || ''; f.path.value = c.path || 'lerntagebuch.json'; f.token.value = c.token || '';
+      t.value = ''; toast('Verbindungscode erkannt – jetzt auf „Verbinden“ tippen');
+    }
+  }
+});
+
+document.addEventListener('change', e => {
+  const t = e.target;
+  if (t.id === 'dayPicker' && t.value) { ui.date = t.value; ui.calMonth = t.value.slice(0, 7); render(); }
+  else if (t.id === 'tLink' && t.value) { syncDraft(); ui.termDraft.entryIds.push(t.value); rerenderDraft(); }
+  else if (t.id === 'importFile' && t.files[0]) {
+    const reader = new FileReader();
+    reader.onload = async () => {
+      let data;
+      try { data = JSON.parse(reader.result); if (!Array.isArray(data.entries)) throw 0; }
+      catch { toast('Das ist keine gültige Backup-Datei'); return; }
+      if (!await confirmDialog(`Backup mit ${data.entries.length} Einträgen, ${(data.terms || []).length} Begriffen und ${(data.questions || []).length} Fragen laden? Deine aktuellen Daten werden ersetzt.`, 'Importieren')) return;
+      db = normalize(data); save(); go('timeline'); toast('Backup importiert ✅');
+    };
+    reader.readAsText(t.files[0]);
+    t.value = '';
+  }
+});
+
+document.addEventListener('submit', e => {
+  const f = e.target; e.preventDefault();
+  const kind = f.dataset.form;
+  if (kind === 'ask') closeModal(f.v.value.trim());
+  else if (kind === 'sync-connect') connectSync(f);
+  else if (kind === 'add-question') {
+    const text = f.q.value.trim(); if (!text) return;
+    const entryId = f.dataset.entry ? ensureEntry(ui.date).id : null;
+    db.questions.push({ id: uid(), text, entryId, tags: [], status: 'offen', answer: '', createdAt: Date.now(), resolvedAt: null });
+    if (!f.dataset.entry && ui.qFilter === 'geklärt') ui.qFilter = 'offen';
+    save(); render(); const inp = $('form[data-form="add-question"] input'); inp && inp.focus();
+  } else if (kind === 'term') {
+    syncDraft();
+    const d = ui.termDraft; d.name = d.name.trim();
+    if (!d.name) return;
+    const dup = db.terms.find(t => t.id !== d.id && fold(t.name) === fold(d.name));
+    if (d.id) {
+      const t = db.terms.find(x => x.id === d.id);
+      const topicChanged = (t.topicId || null) !== (d.topicId || null);
+      Object.assign(t, { name: d.name, definition: d.definition, tags: d.tags, entryIds: d.entryIds });
+      if (topicChanged) moveTerm(t.id, d.topicId, null);
+    } else {
+      db.terms.push({ id: uid(), name: d.name, definition: d.definition, tags: d.tags, entryIds: d.entryIds, topicId: d.topicId || null, order: termsIn(d.topicId).length });
+    }
+    ui.lastTopic = d.topicId; ui.termDraft = null;
+    save(); closeModal(); render();
+    toast(dup ? `Gespeichert – Hinweis: „${dup.name}“ gibt es schon` : 'Begriff gespeichert 📖');
+  }
+});
+
+document.addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+    e.preventDefault(); closeModal(); go('search'); setTimeout(() => $('#searchInput') && $('#searchInput').focus(), 30); return;
+  }
+  if (e.key === 'Escape' && !$('#modal').hidden) { closeModal(null); return; }
+  const t = e.target;
+  if (t.closest && t.closest('.tag-field') && t.tagName === 'INPUT') {
+    const f = t.closest('.tag-field');
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      const v = t.value.trim().replace(/^#/, '').replace(/,/g, '');
+      if (!v) return;
+      const target = tagTarget(f);
+      if (!target.tags.some(x => x.toLowerCase() === v.toLowerCase())) target.tags.push(v);
+      save(); render(); focusTagField(f.dataset.kind);
+    } else if (e.key === 'Backspace' && !t.value) {
+      const target = tagTarget(f);
+      if (target.tags.length) { target.tags.pop(); save(); render(); focusTagField(f.dataset.kind); }
+    }
+  }
+  if (e.key === 'Enter' && t.classList && t.classList.contains('term-row')) openTermView(t.dataset.id);
+});
+
+/* Drag & Drop im Themenbaum */
+let dragId = null;
+document.addEventListener('dragstart', e => {
+  const r = e.target.closest && e.target.closest('.term-row[draggable]');
+  if (!r) return;
+  dragId = r.dataset.termId; r.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', dragId);
+});
+document.addEventListener('dragend', () => { dragId = null; $$('.dragging,.drop-target').forEach(x => x.classList.remove('dragging', 'drop-target')); });
+document.addEventListener('dragover', e => {
+  if (!dragId) return;
+  const t = e.target.closest('.term-row[draggable], [data-drop-topic]');
+  if (!t) return;
+  e.preventDefault();
+  $$('.drop-target').forEach(x => x !== t && x.classList.remove('drop-target'));
+  t.classList.add('drop-target');
+});
+document.addEventListener('drop', e => {
+  if (!dragId) return;
+  const row = e.target.closest('.term-row[draggable]');
+  const zone = e.target.closest('[data-drop-topic]');
+  if (!row && !zone) return;
+  e.preventDefault();
+  if (row) {
+    if (row.dataset.termId === dragId) return;
+    const target = db.terms.find(x => x.id === row.dataset.termId);
+    moveTerm(dragId, target.topicId, target.id);
+  } else moveTerm(dragId, zone.dataset.dropTopic || null, null);
+  dragId = null; render();
+});
+
+/* Sync-Auslöser: beim Öffnen, beim Zurückkehren zur App, beim Verlassen, wenn wieder online */
+document.addEventListener('visibilitychange', () => {
+  if (!Sync.on) return;
+  if (document.visibilityState === 'visible') { if (Date.now() - Sync.lastRun > 10000) Sync.run(); }
+  else if (Sync.cfg.dirty || saveTimer) Sync.run();
+});
+window.addEventListener('online', () => Sync.run());
+setInterval(() => { if (Sync.on && document.visibilityState === 'visible' && Date.now() - Sync.lastRun > 120000) Sync.run(); }, 30000);
+
+/* Start */
+Sync.load();
+load();
+if (window.matchMedia) matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', () => applyTheme());
+render();
+renderSyncPill();
+Sync.run();
+</script>
+</body>
+</html>
